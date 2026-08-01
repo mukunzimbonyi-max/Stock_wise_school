@@ -10,33 +10,128 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AddStockRouteImport } from './routes/add-stock'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FoodReleasedRouteImport } from './routes/food-released'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SchoolInformationRouteImport } from './routes/school-information'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as StockRecordsRouteImport } from './routes/stock-records'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AddStockRoute = AddStockRouteImport.update({
+  id: '/add-stock',
+  path: '/add-stock',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoodReleasedRoute = FoodReleasedRouteImport.update({
+  id: '/food-released',
+  path: '/food-released',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SchoolInformationRoute = SchoolInformationRouteImport.update({
+  id: '/school-information',
+  path: '/school-information',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockRecordsRoute = StockRecordsRouteImport.update({
+  id: '/stock-records',
+  path: '/stock-records',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/add-stock': typeof AddStockRoute
+  '/dashboard': typeof DashboardRoute
+  '/food-released': typeof FoodReleasedRoute
+  '/reports': typeof ReportsRoute
+  '/school-information': typeof SchoolInformationRoute
+  '/settings': typeof SettingsRoute
+  '/stock-records': typeof StockRecordsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/add-stock': typeof AddStockRoute
+  '/dashboard': typeof DashboardRoute
+  '/food-released': typeof FoodReleasedRoute
+  '/reports': typeof ReportsRoute
+  '/school-information': typeof SchoolInformationRoute
+  '/settings': typeof SettingsRoute
+  '/stock-records': typeof StockRecordsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/add-stock': typeof AddStockRoute
+  '/dashboard': typeof DashboardRoute
+  '/food-released': typeof FoodReleasedRoute
+  '/reports': typeof ReportsRoute
+  '/school-information': typeof SchoolInformationRoute
+  '/settings': typeof SettingsRoute
+  '/stock-records': typeof StockRecordsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/add-stock'
+    | '/dashboard'
+    | '/food-released'
+    | '/reports'
+    | '/school-information'
+    | '/settings'
+    | '/stock-records'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/add-stock'
+    | '/dashboard'
+    | '/food-released'
+    | '/reports'
+    | '/school-information'
+    | '/settings'
+    | '/stock-records'
+  id:
+    | '__root__'
+    | '/'
+    | '/add-stock'
+    | '/dashboard'
+    | '/food-released'
+    | '/reports'
+    | '/school-information'
+    | '/settings'
+    | '/stock-records'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AddStockRoute: typeof AddStockRoute
+  DashboardRoute: typeof DashboardRoute
+  FoodReleasedRoute: typeof FoodReleasedRoute
+  ReportsRoute: typeof ReportsRoute
+  SchoolInformationRoute: typeof SchoolInformationRoute
+  SettingsRoute: typeof SettingsRoute
+  StockRecordsRoute: typeof StockRecordsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +143,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/add-stock': {
+      id: '/add-stock'
+      path: '/add-stock'
+      fullPath: '/add-stock'
+      preLoaderRoute: typeof AddStockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/food-released': {
+      id: '/food-released'
+      path: '/food-released'
+      fullPath: '/food-released'
+      preLoaderRoute: typeof FoodReleasedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/school-information': {
+      id: '/school-information'
+      path: '/school-information'
+      fullPath: '/school-information'
+      preLoaderRoute: typeof SchoolInformationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock-records': {
+      id: '/stock-records'
+      path: '/stock-records'
+      fullPath: '/stock-records'
+      preLoaderRoute: typeof StockRecordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AddStockRoute: AddStockRoute,
+  DashboardRoute: DashboardRoute,
+  FoodReleasedRoute: FoodReleasedRoute,
+  ReportsRoute: ReportsRoute,
+  SchoolInformationRoute: SchoolInformationRoute,
+  SettingsRoute: SettingsRoute,
+  StockRecordsRoute: StockRecordsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

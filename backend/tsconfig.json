@@ -11,8 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "sourceMap": true,
-    "types": ["node"]
+    "sourceMap": true
   },
   "include": ["src"]
 }

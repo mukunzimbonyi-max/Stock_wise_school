@@ -79,14 +79,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "School Food Stock Management System" },
+      { title: "Login — School Food Stock Management System" },
       {
         name: "description",
         content:
-          "Record and manage school food stock received, released, used, destroyed and remaining.",
+          "Sign in to the School Food Stock Management System to record food received, released, used and remaining.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Login — School Food Stock Management System" },
+      { name: "twitter:title", content: "Login — School Food Stock Management System" },
+      { property: "og:description", content: "Sign in to the School Food Stock Management System to record food received, released, used and remaining." },
+      { name: "twitter:description", content: "Sign in to the School Food Stock Management System to record food received, released, used and remaining." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ae2bc792-436a-42d1-8991-c9b9cd93a9c1/id-preview-e4535bce--85cdb315-3054-4a00-817a-cf84001e25b3.lovable.app-1785579961919.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ae2bc792-436a-42d1-8991-c9b9cd93a9c1/id-preview-e4535bce--85cdb315-3054-4a00-817a-cf84001e25b3.lovable.app-1785579961919.png" },
     ],
     links: [
       {

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Login — School Food Stock Management System" },
       {
         property: "og:description",
-        content: "Secure sign in for school staff managing daily food stock records.",
+        content: "Sign in to the School Food Stock Management System to record food received, released, used and remaining.",
       },
     ],
   }),

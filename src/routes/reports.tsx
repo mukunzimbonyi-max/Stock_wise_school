@@ -28,7 +28,6 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -39,8 +38,8 @@ import {
 } from "@/components/ui/select";
 import {
   byFoodItem,
-  FOOD_ITEMS,
   summarize,
+  useFoodItems,
   useSchoolInfo,
   useStockRecords,
 } from "@/lib/stock-store";
@@ -48,13 +47,13 @@ import {
 export const Route = createFileRoute("/reports")({
   head: () => ({
     meta: [
-      { title: "Stock Reports — School Food Stock Management" },
+      { title: "Report — School Food Stock Management" },
       {
         name: "description",
         content:
           "Generate daily, weekly and monthly food stock reports with charts and export options.",
       },
-      { property: "og:title", content: "Stock Reports — School Food Stock Management" },
+      { property: "og:title", content: "Report — School Food Stock Management" },
       {
         property: "og:description",
         content: "Filtered reports on food received, released, lost and remaining.",
@@ -66,9 +65,21 @@ export const Route = createFileRoute("/reports")({
 
 const REPORTS = [
   { title: "Daily Stock Report", desc: "Movements recorded for a single day", icon: CalendarDays },
-  { title: "Weekly Stock Report", desc: "Seven-day summary of stock activity", icon: CalendarRange },
-  { title: "Monthly Stock Report", desc: "Full month of received and released food", icon: CalendarRange },
-  { title: "Food Received Report", desc: "Deliveries grouped by supplier and item", icon: PackageCheck },
+  {
+    title: "Weekly Stock Report",
+    desc: "Seven-day summary of stock activity",
+    icon: CalendarRange,
+  },
+  {
+    title: "Monthly Stock Report",
+    desc: "Full month of received and released food",
+    icon: CalendarRange,
+  },
+  {
+    title: "Food Received Report",
+    desc: "Deliveries grouped by supplier and item",
+    icon: PackageCheck,
+  },
   { title: "Food Released Report", desc: "Food handed to cooks for feeding", icon: Soup },
   { title: "Food Loss Report", desc: "Destroyed and thrown-away quantities", icon: Trash2 },
   { title: "Remaining Stock Report", desc: "What is currently left in store", icon: Warehouse },
@@ -86,20 +97,40 @@ const CHART_COLORS = [
 function Reports() {
   const { records } = useStockRecords();
   const { school } = useSchoolInfo();
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const { foodItems } = useFoodItems();
   const [item, setItem] = useState("all");
-  const [year, setYear] = useState(school.academicYear);
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [month, setMonth] = useState("all");
+
+  const yearOptions = useMemo(() => {
+    const years = Array.from(new Set(records.map((r) => r.date.slice(0, 4)))).sort();
+    return years;
+  }, [records]);
+
+  const monthOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of records) {
+      if (year !== "all" && r.date.slice(0, 4) !== year) continue;
+      const key = r.date.slice(0, 7);
+      if (!map.has(key)) {
+        map.set(key, new Date(r.date).toLocaleString("en", { month: "long", year: "numeric" }));
+      }
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [records, year]);
+
+  const monthLabel = monthOptions.find(([v]) => v === month)?.[1] ?? "";
+  const periodLabel = month !== "all" ? monthLabel : year !== "all" ? year : "All time";
 
   const filtered = useMemo(
     () =>
       records.filter((r) => {
-        if (start && r.date < start) return false;
-        if (end && r.date > end) return false;
+        if (year !== "all" && r.date.slice(0, 4) !== year) return false;
+        if (month !== "all" && r.date.slice(0, 7) !== month) return false;
         if (item !== "all" && r.foodItem !== item) return false;
         return true;
       }),
-    [records, start, end, item],
+    [records, year, month, item],
   );
 
   const stats = useMemo(() => summarize(filtered), [filtered]);
@@ -107,37 +138,68 @@ function Reports() {
   const usage = perItem.map((i) => ({ item: i.item, value: i.released }));
 
   return (
-    <AppShell title="Stock Reports" subtitle={`Academic year ${year} · ${filtered.length} records`}>
+    <AppShell
+      title="Report"
+      subtitle={`${periodLabel} report · ${filtered.length} records · ${school.academicYear}`}
+    >
       <div className="space-y-5">
         <div className="card-surface p-5">
-          <h2 className="text-base font-bold">Report Filters</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <h2 className="text-base font-bold">Report Period</h2>
+          <p className="text-xs text-muted-foreground">
+            Choose a year and month to view the stock report for that time.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Start Date</Label>
-              <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">End Date</Label>
-              <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Food Item</Label>
-              <Select value={item} onValueChange={setItem}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Label className="text-xs">Year</Label>
+              <Select
+                value={year}
+                onValueChange={(v) => {
+                  setYear(v);
+                  setMonth("all");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All items</SelectItem>
-                  {FOOD_ITEMS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  <SelectItem value="all">All years</SelectItem>
+                  {yearOptions.map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Academic Year</Label>
-              <Select value={year} onValueChange={setYear}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Label className="text-xs">Month</Label>
+              <Select value={month} onValueChange={setMonth} disabled={year === "all"}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={school.academicYear}>{school.academicYear}</SelectItem>
-                  <SelectItem value="2024-2025">2024-2025</SelectItem>
-                  <SelectItem value="2023-2024">2023-2024</SelectItem>
+                  <SelectItem value="all">All months</SelectItem>
+                  {monthOptions.map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Food Item</Label>
+              <Select value={item} onValueChange={setItem}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All items</SelectItem>
+                  {foodItems.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {f}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -156,10 +218,34 @@ function Reports() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Food Received" value={stats.received} unit="units" icon={PackageCheck} tone="primary" />
-          <StatCard label="Food Released" value={stats.released} unit="units" icon={Soup} tone="success" />
-          <StatCard label="Food Lost" value={stats.destroyed} unit="units" icon={Trash2} tone="destructive" />
-          <StatCard label="Remaining Stock" value={stats.stock} unit="units" icon={Warehouse} tone="warning" />
+          <StatCard
+            label="Food Received"
+            value={stats.received}
+            unit="units"
+            icon={PackageCheck}
+            tone="primary"
+          />
+          <StatCard
+            label="Food Released"
+            value={stats.released}
+            unit="units"
+            icon={Soup}
+            tone="success"
+          />
+          <StatCard
+            label="Food Lost"
+            value={stats.destroyed}
+            unit="units"
+            icon={Trash2}
+            tone="destructive"
+          />
+          <StatCard
+            label="Remaining Stock"
+            value={stats.stock}
+            unit="units"
+            icon={Warehouse}
+            tone="warning"
+          />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -171,7 +257,13 @@ function Reports() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="item" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid var(--border)",
+                      background: "var(--card)",
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Bar dataKey="received" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="released" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
@@ -185,12 +277,28 @@ function Reports() {
             <div className="mt-4 h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={usage} dataKey="value" nameKey="item" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                  <Pie
+                    data={usage}
+                    dataKey="value"
+                    nameKey="item"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={3}
+                  >
                     {usage.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length] ?? "var(--chart-1)"} />
+                      <Cell
+                        key={i}
+                        fill={CHART_COLORS[i % CHART_COLORS.length] ?? "var(--chart-1)"}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid var(--border)",
+                      background: "var(--card)",
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -211,10 +319,18 @@ function Reports() {
                 </div>
               </div>
               <div className="mt-auto flex gap-2">
-                <Button size="sm" className="flex-1" onClick={() => toast.success(`${title} generated`)}>
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => toast.success(`${title} generated`)}
+                >
                   Generate
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => toast.success(`${title} exported as PDF`)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toast.success(`${title} exported as PDF`)}
+                >
                   <FileText className="h-4 w-4" />
                 </Button>
               </div>

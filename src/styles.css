@@ -146,7 +146,6 @@
   --sidebar-ring: oklch(0.7 0.15 150);
 }
 
-
 @layer base {
   * {
     border-color: var(--color-border);
@@ -165,7 +164,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
-  transition: box-shadow 200ms ease, transform 200ms ease;
+  transition:
+    box-shadow 200ms ease,
+    transform 200ms ease;
 }
 
 @utility gradient-primary {
@@ -173,10 +174,16 @@
 }
 
 @utility hover-lift {
-  transition: box-shadow 220ms ease, transform 220ms ease;
+  transition:
+    box-shadow 220ms ease,
+    transform 220ms ease;
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lift);
   }
 }
 
+/* Hide Lovable badge */
+[id^="lovable-badge"] {
+  display: none !important;
+}

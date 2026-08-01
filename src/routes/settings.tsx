@@ -35,7 +35,17 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-function Card({ title, description, icon: Icon, children }: { title: string; description: string; icon: typeof User; children: React.ReactNode }) {
+function Card({
+  title,
+  description,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  description: string;
+  icon: typeof User;
+  children: React.ReactNode;
+}) {
   return (
     <div className="card-surface p-5 sm:p-6">
       <div className="flex items-start gap-3">
@@ -57,7 +67,11 @@ function SettingsPage() {
   const { releases } = useReleases();
   const { school } = useSchoolInfo();
   const [dark, setDark] = useState(false);
-  const [profile, setProfile] = useState({ name: "Aline Niyonkuru", email: "stockmanager@gshuye.rw", role: "Stock Manager" });
+  const [profile, setProfile] = useState({
+    name: "Aline Niyonkuru",
+    email: "stockmanager@gshuye.rw",
+    role: "Stock Manager",
+  });
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
   const [notif, setNotif] = useState({ lowStock: true, delivery: true, weekly: false });
   const [language, setLanguage] = useState("English");
@@ -125,15 +139,25 @@ function SettingsPage() {
         <Card title="Profile Settings" description="Your account details" icon={User}>
           <div className="space-y-1.5">
             <Label>Full name</Label>
-            <Input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+            <Input
+              value={profile.name}
+              onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Email</Label>
-            <Input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+            <Input
+              type="email"
+              value={profile.email}
+              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Role</Label>
-            <Input value={profile.role} onChange={(e) => setProfile({ ...profile, role: e.target.value })} />
+            <Input
+              value={profile.role}
+              onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+            />
           </div>
           <Button onClick={() => toast.success("Profile saved")}>Save profile</Button>
         </Card>
@@ -141,26 +165,47 @@ function SettingsPage() {
         <Card title="Change Password" description="Keep your account secure" icon={KeyRound}>
           <div className="space-y-1.5">
             <Label>Current password</Label>
-            <Input type="password" value={pwd.current} onChange={(e) => setPwd({ ...pwd, current: e.target.value })} />
+            <Input
+              type="password"
+              value={pwd.current}
+              onChange={(e) => setPwd({ ...pwd, current: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>New password</Label>
-            <Input type="password" value={pwd.next} onChange={(e) => setPwd({ ...pwd, next: e.target.value })} />
+            <Input
+              type="password"
+              value={pwd.next}
+              onChange={(e) => setPwd({ ...pwd, next: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Confirm new password</Label>
-            <Input type="password" value={pwd.confirm} onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })} />
+            <Input
+              type="password"
+              value={pwd.confirm}
+              onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })}
+            />
           </div>
           <Button onClick={changePassword}>Update password</Button>
         </Card>
 
-        <Card title="Notifications" description="Choose what the system alerts you about" icon={Globe}>
-          {([
-            ["lowStock", "Low stock warnings"],
-            ["delivery", "New delivery recorded"],
-            ["weekly", "Weekly summary email"],
-          ] as const).map(([key, label]) => (
-            <div key={key} className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
+        <Card
+          title="Notifications"
+          description="Choose what the system alerts you about"
+          icon={Globe}
+        >
+          {(
+            [
+              ["lowStock", "Low stock warnings"],
+              ["delivery", "New delivery recorded"],
+              ["weekly", "Weekly summary email"],
+            ] as const
+          ).map(([key, label]) => (
+            <div
+              key={key}
+              className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3"
+            >
               <span className="text-sm font-medium">{label}</span>
               <Switch
                 checked={notif[key]}
@@ -173,15 +218,27 @@ function SettingsPage() {
           ))}
         </Card>
 
-        <Card title="Appearance & Language" description="Theme and interface language" icon={dark ? Moon : Sun}>
+        <Card
+          title="Appearance & Language"
+          description="Theme and interface language"
+          icon={dark ? Moon : Sun}
+        >
           <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
             <span className="text-sm font-medium">Dark mode</span>
             <Switch checked={dark} onCheckedChange={toggleTheme} />
           </div>
           <div className="space-y-1.5">
             <Label>Language</Label>
-            <Select value={language} onValueChange={(v) => { setLanguage(v); toast.success(`Language set to ${v}`); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={language}
+              onValueChange={(v) => {
+                setLanguage(v);
+                toast.success(`Language set to ${v}`);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="English">English</SelectItem>
                 <SelectItem value="Kinyarwanda">Kinyarwanda</SelectItem>
@@ -191,7 +248,11 @@ function SettingsPage() {
           </div>
         </Card>
 
-        <Card title="Data Backup & Restore" description="Your records are stored in this browser" icon={Database}>
+        <Card
+          title="Data Backup & Restore"
+          description="Your records are stored in this browser"
+          icon={Database}
+        >
           <p className="text-sm text-muted-foreground">
             {records.length} stock records and {releases.length} food releases are currently saved.
           </p>
@@ -202,7 +263,12 @@ function SettingsPage() {
             <Button variant="outline" asChild>
               <label className="cursor-pointer">
                 <Upload className="mr-2 h-4 w-4" /> Restore backup
-                <input type="file" accept="application/json" className="hidden" onChange={restore} />
+                <input
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  onChange={restore}
+                />
               </label>
             </Button>
           </div>

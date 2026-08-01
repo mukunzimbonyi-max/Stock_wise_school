@@ -31,7 +31,9 @@ export function StatCard({
           <p className="text-sm font-medium leading-snug text-muted-foreground">{label}</p>
           <p className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
             {typeof value === "number" ? value.toLocaleString() : value}
-            {unit && <span className="ml-1 text-base font-semibold text-muted-foreground">{unit}</span>}
+            {unit && (
+              <span className="ml-1 text-base font-semibold text-muted-foreground">{unit}</span>
+            )}
           </p>
         </div>
         <div className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", tones[tone])}>
@@ -46,7 +48,11 @@ export function StatCard({
               trend.up ? "bg-success/15 text-success" : "bg-destructive/10 text-destructive",
             )}
           >
-            {trend.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {trend.up ? (
+              <ArrowUpRight className="h-3 w-3" />
+            ) : (
+              <ArrowDownRight className="h-3 w-3" />
+            )}
             {trend.value}
           </span>
           {trend.note && <span className="truncate text-muted-foreground">{trend.note}</span>}

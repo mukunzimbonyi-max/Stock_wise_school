@@ -392,45 +392,45 @@ src/
 
 ├── components/
 
-│   ├── Sidebar.jsx
+│ ├── Sidebar.jsx
 
-│   ├── Navbar.jsx
+│ ├── Navbar.jsx
 
-│   ├── StatCard.jsx
+│ ├── StatCard.jsx
 
-│   ├── StockTable.jsx
+│ ├── StockTable.jsx
 
-│   ├── StockForm.jsx
+│ ├── StockForm.jsx
 
-│   ├── SearchFilter.jsx
+│ ├── SearchFilter.jsx
 
-│   ├── ReportChart.jsx
+│ ├── ReportChart.jsx
 
-│   ├── Modal.jsx
+│ ├── Modal.jsx
 
-│   └── ToastNotification.jsx
+│ └── ToastNotification.jsx
 
 ├── pages/
 
-│   ├── Login.jsx
+│ ├── Login.jsx
 
-│   ├── Dashboard.jsx
+│ ├── Dashboard.jsx
 
-│   ├── StockRecords.jsx
+│ ├── StockRecords.jsx
 
-│   ├── AddStock.jsx
+│ ├── AddStock.jsx
 
-│   ├── FoodReleased.jsx
+│ ├── FoodReleased.jsx
 
-│   ├── Reports.jsx
+│ ├── Reports.jsx
 
-│   ├── SchoolInformation.jsx
+│ ├── SchoolInformation.jsx
 
-│   └── Settings.jsx
+│ └── Settings.jsx
 
 ├── data/
 
-│   └── sampleStockData.js
+│ └── sampleStockData.js
 
 ├── App.jsx
 

@@ -12,12 +12,21 @@ import {
   X,
   Bell,
   Search,
-  Sprout,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -25,7 +34,7 @@ const NAV = [
   { to: "/stock-records", label: "Stock Records", icon: Table2 },
   { to: "/add-stock", label: "Add Stock", icon: PlusCircle },
   { to: "/food-released", label: "Food Released", icon: Soup },
-  { to: "/reports", label: "Stock Reports", icon: FileBarChart },
+  { to: "/reports", label: "Report", icon: FileBarChart },
   { to: "/school-information", label: "School Information", icon: School },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -44,6 +53,7 @@ export function AppShell({
   onSearchChange?: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -63,20 +73,36 @@ export function AppShell({
     <div className="min-h-screen bg-background">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 lg:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full",
+          "fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 lg:translate-x-0",
+          collapsed ? "w-20" : "w-72",
+          open ? "translate-x-0 w-72" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
-            <Sprout className="h-6 w-6" />
+        <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-4">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white p-0.5 shadow-sm">
+            <img src="/j.png" alt="School Logo" className="h-full w-full object-contain" />
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold leading-tight">School Food Stock</p>
-            <p className="truncate text-xs text-sidebar-foreground/70">Management System</p>
-          </div>
+          {(!collapsed || open) && (
+            <div className="min-w-0 flex-1 transition-opacity duration-300">
+              <p className="truncate text-sm font-bold leading-tight">G.S. NKUBI</p>
+              <p className="truncate text-[10px] uppercase tracking-wider text-sidebar-foreground/70">
+                Food Stock Management
+              </p>
+            </div>
+          )}
           <button
-            className="ml-auto rounded-md p-1 lg:hidden"
+            className="ml-auto hidden rounded-md p-1.5 text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:block"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label="Toggle sidebar"
+          >
+            {collapsed ? (
+              <ChevronsRight className="h-5 w-5" />
+            ) : (
+              <ChevronsLeft className="h-5 w-5" />
+            )}
+          </button>
+          <button
+            className="ml-auto rounded-md p-1.5 lg:hidden"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           >
@@ -89,10 +115,14 @@ export function AppShell({
             <Link
               key={to}
               to={to}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground"
+              title={collapsed && !open ? label : undefined}
+              className={cn(
+                "flex items-center rounded-lg py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground",
+                collapsed && !open ? "justify-center px-0" : "gap-3 px-3",
+              )}
             >
-              <Icon className="h-4.5 w-4.5 shrink-0" />
-              <span className="truncate">{label}</span>
+              <Icon className="h-5 w-5 shrink-0" />
+              {(!collapsed || open) && <span className="truncate">{label}</span>}
             </Link>
           ))}
         </nav>
@@ -100,10 +130,14 @@ export function AppShell({
         <div className="border-t border-sidebar-border p-3">
           <button
             onClick={logout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-destructive/20 hover:text-sidebar-accent-foreground"
+            title={collapsed && !open ? "Logout" : undefined}
+            className={cn(
+              "flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-destructive/20 hover:text-sidebar-accent-foreground",
+              collapsed && !open ? "justify-center px-0" : "gap-3 px-3",
+            )}
           >
-            <LogOut className="h-4.5 w-4.5" />
-            Logout
+            <LogOut className="h-5 w-5 shrink-0" />
+            {(!collapsed || open) && <span>Logout</span>}
           </button>
         </div>
       </aside>
@@ -115,7 +149,7 @@ export function AppShell({
         />
       )}
 
-      <div className="lg:pl-72">
+      <div className={cn("transition-all duration-300", collapsed ? "lg:pl-20" : "lg:pl-72")}>
         <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
           <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6">
             <button
@@ -127,9 +161,7 @@ export function AppShell({
             </button>
             <div className="min-w-0">
               <h1 className="truncate text-lg font-bold sm:text-xl">{title}</h1>
-              {subtitle && (
-                <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
-              )}
+              {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
             </div>
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <div className="relative hidden md:block">
@@ -152,15 +184,44 @@ export function AppShell({
                 <Bell className="h-5 w-5" />
                 <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
               </Button>
-              <div className="flex items-center gap-2">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
-                  AN
-                </div>
-                <div className="hidden leading-tight sm:block">
-                  <p className="text-sm font-semibold">Aline Niyonkuru</p>
-                  <p className="text-xs text-muted-foreground">Stock Manager</p>
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
+                      AN
+                    </div>
+                    <div className="hidden text-left leading-tight sm:block">
+                      <p className="text-sm font-semibold">Aline Niyonkuru</p>
+                      <p className="text-xs text-muted-foreground">Stock Manager</p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">Aline Niyonkuru</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        stockmanager@gshuye.rw
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => navigate({ to: "/settings" })}
+                    className="cursor-pointer"
+                  >
+                    <Settings className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>

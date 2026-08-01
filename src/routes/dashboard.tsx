@@ -28,6 +28,15 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   byFoodItem,
   LOW_STOCK_THRESHOLD,
@@ -39,16 +48,17 @@ import {
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — School Food Stock Management" },
+      { title: "Dashboard — GS NKUBI Food Stock Management" },
       {
         name: "description",
         content:
-          "Overview of food received, released, destroyed and remaining stock for the school kitchen.",
+          "Overview of food received, released, destroyed and remaining stock for GS NKUBI school kitchen.",
       },
-      { property: "og:title", content: "Dashboard — School Food Stock Management" },
+      { property: "og:title", content: "Dashboard — GS NKUBI Food Stock Management" },
       {
         property: "og:description",
-        content: "Live stock statistics, activity and low-stock warnings for school feeding.",
+        content:
+          "Live stock statistics, activity and low-stock warnings for GS NKUBI school feeding.",
       },
     ],
   }),
@@ -67,27 +77,90 @@ const CHART_COLORS = [
 function Dashboard() {
   const { records } = useStockRecords();
   const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState<"annual" | "monthly" | "daily">("annual");
+  const [year, setYear] = useState("all");
+  const [month, setMonth] = useState("all");
+  const [date, setDate] = useState("");
 
-  const stats = useMemo(() => summarize(records), [records]);
-  const perItem = useMemo(() => byFoodItem(records), [records]);
+  const yearOptions = useMemo(() => {
+    const years = Array.from(new Set(records.map((r) => r.date.slice(0, 4)))).sort();
+    return years;
+  }, [records]);
+
+  const monthOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of records) {
+      if (year !== "all" && r.date.slice(0, 4) !== year) continue;
+      const key = r.date.slice(0, 7);
+      if (!map.has(key)) {
+        map.set(key, new Date(r.date).toLocaleString("en", { month: "long", year: "numeric" }));
+      }
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [records, year]);
+
+  const changePeriod = (p: "annual" | "monthly" | "daily") => {
+    setPeriod(p);
+    if (p === "annual") {
+      setMonth("all");
+      setDate("");
+    } else if (p === "monthly") {
+      setDate("");
+    } else {
+      setMonth("all");
+    }
+  };
+
+  const changeYear = (y: string) => {
+    setYear(y);
+    setMonth("all");
+    setDate("");
+  };
+
+  const filtered = useMemo(
+    () =>
+      records.filter((r) => {
+        if (year !== "all" && r.date.slice(0, 4) !== year) return false;
+        if (month !== "all" && r.date.slice(0, 7) !== month) return false;
+        if (date && r.date !== date) return false;
+        return true;
+      }),
+    [records, year, month, date],
+  );
+
+  const stats = useMemo(() => summarize(filtered), [filtered]);
+  const perItem = useMemo(() => byFoodItem(filtered), [filtered]);
   const low = perItem.filter((i) => i.remaining < LOW_STOCK_THRESHOLD);
 
-  const monthly = useMemo(() => {
-    const map = new Map<string, { month: string; received: number; released: number }>();
-    for (const r of [...records].sort((a, b) => a.date.localeCompare(b.date))) {
-      const key = r.date.slice(0, 7);
-      const month = new Date(r.date).toLocaleString("en", { month: "short" });
-      const cur = map.get(key) ?? { month, received: 0, released: 0 };
+  const movement = useMemo(() => {
+    const map = new Map<string, { label: string; received: number; released: number }>();
+    for (const r of [...filtered].sort((a, b) => a.date.localeCompare(b.date))) {
+      let key: string;
+      let label: string;
+      if (period === "daily") {
+        key = r.date;
+        label = r.date.slice(5);
+      } else if (period === "monthly") {
+        key = r.date.slice(0, 7);
+        label = new Date(r.date).toLocaleString("en", { month: "short" });
+      } else if (year === "all") {
+        key = r.date.slice(0, 4);
+        label = key;
+      } else {
+        key = r.date.slice(0, 7);
+        label = new Date(r.date).toLocaleString("en", { month: "short" });
+      }
+      const cur = map.get(key) ?? { label, received: 0, released: 0 };
       cur.received += r.received;
       cur.released += r.provided;
       map.set(key, cur);
     }
     return [...map.values()];
-  }, [records]);
+  }, [filtered, period, year]);
 
   const recent = useMemo(
-    () => [...records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6),
-    [records],
+    () => [...filtered].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6),
+    [filtered],
   );
 
   const filteredRecent = recent.filter((r) =>
@@ -102,11 +175,126 @@ function Dashboard() {
       onSearchChange={setSearch}
     >
       <div className="space-y-6">
+        {/* School letterhead */}
+        <div className="card-surface flex items-center justify-center gap-6 px-6 py-5 text-left">
+          <img
+            src="/j.png"
+            alt="GS NKUBI Logo"
+            className="h-20 w-20 shrink-0 rounded-full bg-white object-contain p-1 shadow-sm"
+          />
+          <div>
+            <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              Huye District · Mukura Sector
+            </p>
+            <p className="text-xl font-extrabold uppercase tracking-widest text-primary">
+              Groupe Scolaire NKUBI
+            </p>
+          </div>
+        </div>
+
+        <div className="card-surface p-4">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Record Period</Label>
+              <div className="flex overflow-hidden rounded-lg border border-border">
+                {(["annual", "monthly", "daily"] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => changePeriod(p)}
+                    className={`px-4 py-2 text-sm font-semibold capitalize transition-colors ${
+                      period === p
+                        ? "gradient-primary text-primary-foreground"
+                        : "bg-muted/40 hover:bg-muted"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Year</Label>
+              <Select value={year} onValueChange={changeYear}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All years</SelectItem>
+                  {yearOptions.map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {period === "monthly" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Month</Label>
+                <Select value={month} onValueChange={setMonth}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All months</SelectItem>
+                    {monthOptions.map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {period === "daily" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Day</Label>
+                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+            )}
+
+            <div className="ml-auto rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+              {filtered.length} record{filtered.length === 1 ? "" : "s"} in view
+            </div>
+          </div>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Food Received" value={stats.received} unit="units" icon={PackageCheck} tone="primary" trend={{ value: "+12.4%", up: true, note: "vs last month" }} />
-          <StatCard label="Total Food Released" value={stats.released} unit="units" icon={Soup} tone="success" trend={{ value: "+8.1%", up: true, note: "student feeding" }} />
-          <StatCard label="Total Food Destroyed" value={stats.destroyed} unit="units" icon={Trash2} tone="destructive" trend={{ value: "-2.6%", up: false, note: "loss reduced" }} />
-          <StatCard label="Remaining Stock" value={stats.stock} unit="units" icon={Warehouse} tone="warning" trend={{ value: `${low.length} low`, up: low.length === 0, note: "items to restock" }} />
+          <StatCard
+            label="Total Food Received"
+            value={stats.received}
+            unit="units"
+            icon={PackageCheck}
+            tone="primary"
+            trend={{ value: "+12.4%", up: true, note: "vs last month" }}
+          />
+          <StatCard
+            label="Total Food Released"
+            value={stats.released}
+            unit="units"
+            icon={Soup}
+            tone="success"
+            trend={{ value: "+8.1%", up: true, note: "student feeding" }}
+          />
+          <StatCard
+            label="Total Food Destroyed"
+            value={stats.destroyed}
+            unit="units"
+            icon={Trash2}
+            tone="destructive"
+            trend={{ value: "-2.6%", up: false, note: "loss reduced" }}
+          />
+          <StatCard
+            label="Remaining Stock"
+            value={stats.stock}
+            unit="units"
+            icon={Warehouse}
+            tone="warning"
+            trend={{ value: `${low.length} low`, up: low.length === 0, note: "items to restock" }}
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -130,14 +318,22 @@ function Dashboard() {
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="card-surface p-5 lg:col-span-2">
             <h2 className="text-base font-bold">Food Stock Summary</h2>
-            <p className="text-xs text-muted-foreground">Received, released and remaining by item</p>
+            <p className="text-xs text-muted-foreground">
+              Received, released and remaining by item
+            </p>
             <div className="mt-4 h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={perItem}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="item" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid var(--border)",
+                      background: "var(--card)",
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Bar dataKey="received" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="released" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
@@ -153,12 +349,28 @@ function Dashboard() {
             <div className="mt-4 h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={perItem} dataKey="remaining" nameKey="item" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                  <Pie
+                    data={perItem}
+                    dataKey="remaining"
+                    nameKey="item"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={3}
+                  >
                     {perItem.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length] ?? "var(--chart-1)"} />
+                      <Cell
+                        key={i}
+                        fill={CHART_COLORS[i % CHART_COLORS.length] ?? "var(--chart-1)"}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid var(--border)",
+                      background: "var(--card)",
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -168,17 +380,35 @@ function Dashboard() {
 
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="card-surface p-5 lg:col-span-2">
-            <h2 className="text-base font-bold">Monthly Stock Movement</h2>
+            <h2 className="text-base font-bold capitalize">{period} Stock Movement</h2>
             <div className="mt-4 h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthly}>
+                <LineChart data={movement}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
                   <YAxis tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 12,
+                      border: "1px solid var(--border)",
+                      background: "var(--card)",
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="received" stroke="var(--chart-1)" strokeWidth={3} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="released" stroke="var(--chart-2)" strokeWidth={3} dot={{ r: 4 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="received"
+                    stroke="var(--chart-1)"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="released"
+                    stroke="var(--chart-2)"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -191,13 +421,17 @@ function Dashboard() {
             </div>
             <div className="mt-4 space-y-3">
               {low.length === 0 && (
-                <p className="text-sm text-muted-foreground">All items are above the minimum level.</p>
+                <p className="text-sm text-muted-foreground">
+                  All items are above the minimum level.
+                </p>
               )}
               {low.map((i) => (
                 <div key={i.item} className="rounded-xl border border-warning/40 bg-warning/10 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-semibold">{i.item}</span>
-                    <span className="shrink-0 text-sm font-bold text-warning">{i.remaining} left</span>
+                    <span className="shrink-0 text-sm font-bold text-warning">
+                      {i.remaining} left
+                    </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Below the {LOW_STOCK_THRESHOLD}-unit minimum. Order from supplier soon.
@@ -229,13 +463,22 @@ function Dashboard() {
               </thead>
               <tbody>
                 {filteredRecent.map((r) => (
-                  <tr key={r.id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50">
+                  <tr
+                    key={r.id}
+                    className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/50"
+                  >
                     <td className="py-3 pr-4 whitespace-nowrap">{r.date}</td>
                     <td className="py-3 pr-4 font-medium">{r.foodItem}</td>
-                    <td className="py-3 pr-4">{r.received} {r.unit}</td>
-                    <td className="py-3 pr-4">{r.provided} {r.unit}</td>
+                    <td className="py-3 pr-4">
+                      {r.received} {r.unit}
+                    </td>
+                    <td className="py-3 pr-4">
+                      {r.provided} {r.unit}
+                    </td>
                     <td className="py-3 pr-4">{r.cookName}</td>
-                    <td className="py-3 font-semibold text-primary">{remaining(r)} {r.unit}</td>
+                    <td className="py-3 font-semibold text-primary">
+                      {remaining(r)} {r.unit}
+                    </td>
                   </tr>
                 ))}
                 {filteredRecent.length === 0 && (

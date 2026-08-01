@@ -14,7 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FOOD_ITEMS, UNITS, useSchoolInfo, useStockRecords } from "@/lib/stock-store";
+import {
+  NEW_ITEM_VALUE,
+  UNITS,
+  useFoodItems,
+  useSchoolInfo,
+  useStockRecords,
+} from "@/lib/stock-store";
 
 export const Route = createFileRoute("/add-stock")({
   head: () => ({
@@ -51,7 +57,15 @@ const empty = {
   explanation: "",
 };
 
-function Section({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="card-surface p-5 sm:p-6">
       <h2 className="text-base font-bold">{title}</h2>
@@ -64,9 +78,14 @@ function Section({ title, description, children }: { title: string; description:
 function AddStock() {
   const { add } = useStockRecords();
   const { school, setSchool } = useSchoolInfo();
+  const { foodItems, addFoodItem } = useFoodItems();
   const navigate = useNavigate();
   const [form, setForm] = useState(empty);
-  type Errors = Partial<Record<"date" | "supplierName" | "cookName" | "received" | "explanation", string>>;
+  const [customMode, setCustomMode] = useState(false);
+  const [customItem, setCustomItem] = useState("");
+  type Errors = Partial<
+    Record<"date" | "supplierName" | "cookName" | "received" | "explanation" | "customItem", string>
+  >;
   const [errors, setErrors] = useState<Errors>({});
 
   const set = (k: keyof typeof empty, v: string | number) => setForm((f) => ({ ...f, [k]: v }));
@@ -76,13 +95,17 @@ function AddStock() {
   const remainingQty =
     form.startedWith + form.received - form.provided - form.destroyed - form.thrownAway;
 
+  const effectiveItem = customMode && customItem.trim() ? customItem.trim() : form.foodItem;
+
   const validate = () => {
     const next: Errors = {};
     if (!form.date) next.date = "Date is required";
     if (!form.supplierName.trim()) next.supplierName = "Supplier name is required";
-    if (form.provided > 0 && !form.cookName.trim()) next.cookName = "Cook name is required when food is provided";
+    if (form.provided > 0 && !form.cookName.trim())
+      next.cookName = "Cook name is required when food is provided";
     if (form.startedWith < 0 || form.received < 0) next.received = "Quantities cannot be negative";
     if (remainingQty < 0) next.explanation = "Remaining stock is negative — check your quantities";
+    if (customMode && !customItem.trim()) next.customItem = "Enter the name of the new item";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -92,12 +115,15 @@ function AddStock() {
       toast.error("Please fix the highlighted fields");
       return;
     }
-    add(form);
+    if (customMode && customItem.trim()) addFoodItem(customItem.trim());
+    add({ ...form, foodItem: effectiveItem });
     toast.success("Stock record saved", {
-      description: `${form.foodItem} · remaining ${remainingQty} ${form.unit}`,
+      description: `${effectiveItem} · remaining ${remainingQty} ${form.unit}`,
     });
     if (again) {
       setForm({ ...empty, date: form.date, supplierName: form.supplierName });
+      setCustomMode(false);
+      setCustomItem("");
       setErrors({});
     } else {
       navigate({ to: "/stock-records" });
@@ -107,15 +133,26 @@ function AddStock() {
   return (
     <AppShell title="Add Stock Record" subtitle="Enter a new entry into the food stock book">
       <div className="space-y-5 pb-4">
-        <Section title="School Information" description="Applies to this record and is saved with your school profile">
+        <Section
+          title="School Information"
+          description="Applies to this record and is saved with your school profile"
+        >
           <div className="space-y-1.5">
             <Label>School Name</Label>
-            <Input value={school.name} onChange={(e) => setSchool({ ...school, name: e.target.value })} />
+            <Input
+              value={school.name}
+              onChange={(e) => setSchool({ ...school, name: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>School Category</Label>
-            <Select value={school.category} onValueChange={(v) => setSchool({ ...school, category: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={school.category}
+              onValueChange={(v) => setSchool({ ...school, category: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Day School">Day School</SelectItem>
                 <SelectItem value="Boarding School">Boarding School</SelectItem>
@@ -125,19 +162,31 @@ function AddStock() {
           </div>
           <div className="space-y-1.5">
             <Label>School Number</Label>
-            <Input value={school.number} onChange={(e) => setSchool({ ...school, number: e.target.value })} />
+            <Input
+              value={school.number}
+              onChange={(e) => setSchool({ ...school, number: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>District</Label>
-            <Input value={school.district} onChange={(e) => setSchool({ ...school, district: e.target.value })} />
+            <Input
+              value={school.district}
+              onChange={(e) => setSchool({ ...school, district: e.target.value })}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Academic Year</Label>
-            <Input value={school.academicYear} onChange={(e) => setSchool({ ...school, academicYear: e.target.value })} />
+            <Input
+              value={school.academicYear}
+              onChange={(e) => setSchool({ ...school, academicYear: e.target.value })}
+            />
           </div>
         </Section>
 
-        <Section title="Stock Information" description="What was in store and what was received today">
+        <Section
+          title="Stock Information"
+          description="What was in store and what was received today"
+        >
           <div className="space-y-1.5">
             <Label>Date</Label>
             <Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
@@ -145,16 +194,52 @@ function AddStock() {
           </div>
           <div className="space-y-1.5">
             <Label>Food Item</Label>
-            <Select value={form.foodItem} onValueChange={(v) => set("foodItem", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{FOOD_ITEMS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+            <Select
+              value={customMode ? NEW_ITEM_VALUE : form.foodItem}
+              onValueChange={(v) => {
+                if (v === NEW_ITEM_VALUE) {
+                  setCustomMode(true);
+                } else {
+                  setCustomMode(false);
+                  set("foodItem", v);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {foodItems.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+                <SelectItem value={NEW_ITEM_VALUE}>Other / New item…</SelectItem>
+              </SelectContent>
             </Select>
+            {customMode && (
+              <Input
+                value={customItem}
+                onChange={(e) => setCustomItem(e.target.value)}
+                placeholder="Enter new item name"
+                autoFocus
+              />
+            )}
+            {errors.customItem && <p className="text-xs text-destructive">{errors.customItem}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Unit of Measurement</Label>
             <Select value={form.unit} onValueChange={(v) => set("unit", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {UNITS.map((u) => (
+                  <SelectItem key={u} value={u}>
+                    {u}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
@@ -168,12 +253,22 @@ function AddStock() {
           </div>
           <div className="space-y-1.5">
             <Label>Supplier Name</Label>
-            <Input value={form.supplierName} onChange={(e) => set("supplierName", e.target.value)} placeholder="e.g. Huye Agro Supplies" />
-            {errors.supplierName && <p className="text-xs text-destructive">{errors.supplierName}</p>}
+            <Input
+              value={form.supplierName}
+              onChange={(e) => set("supplierName", e.target.value)}
+              placeholder="e.g. Huye Agro Supplies"
+            />
+            {errors.supplierName && (
+              <p className="text-xs text-destructive">{errors.supplierName}</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Supplier Signature</Label>
-            <Input value={form.supplierSignature} onChange={(e) => set("supplierSignature", e.target.value)} placeholder="Initials of supplier" />
+            <Input
+              value={form.supplierSignature}
+              onChange={(e) => set("supplierSignature", e.target.value)}
+              placeholder="Initials of supplier"
+            />
           </div>
         </Section>
 
@@ -184,16 +279,27 @@ function AddStock() {
           </div>
           <div className="space-y-1.5">
             <Label>Cook Name</Label>
-            <Input value={form.cookName} onChange={(e) => set("cookName", e.target.value)} placeholder="e.g. Alice Uwase" />
+            <Input
+              value={form.cookName}
+              onChange={(e) => set("cookName", e.target.value)}
+              placeholder="Niyogisubizo Jeremie"
+            />
             {errors.cookName && <p className="text-xs text-destructive">{errors.cookName}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Cook Signature</Label>
-            <Input value={form.cookSignature} onChange={(e) => set("cookSignature", e.target.value)} placeholder="Initials of cook" />
+            <Input
+              value={form.cookSignature}
+              onChange={(e) => set("cookSignature", e.target.value)}
+              placeholder="Initials of cook"
+            />
           </div>
         </Section>
 
-        <Section title="Stock Loss Information" description="Record any food destroyed or thrown away">
+        <Section
+          title="Stock Loss Information"
+          description="Record any food destroyed or thrown away"
+        >
           <div className="space-y-1.5">
             <Label>Quantity Destroyed</Label>
             <Input type="number" min={0} value={form.destroyed} onChange={num("destroyed")} />
@@ -204,7 +310,12 @@ function AddStock() {
           </div>
           <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
             <Label>Explanation</Label>
-            <Textarea value={form.explanation} onChange={(e) => set("explanation", e.target.value)} placeholder="Reason for the loss or any notes" rows={3} />
+            <Textarea
+              value={form.explanation}
+              onChange={(e) => set("explanation", e.target.value)}
+              placeholder="Reason for the loss or any notes"
+              rows={3}
+            />
             {errors.explanation && <p className="text-xs text-destructive">{errors.explanation}</p>}
           </div>
         </Section>
@@ -218,7 +329,9 @@ function AddStock() {
               <p className="text-xs text-muted-foreground">
                 Started with + Received − Provided − Destroyed − Thrown away
               </p>
-              <p className={`text-2xl font-bold ${remainingQty < 0 ? "text-destructive" : "text-primary"}`}>
+              <p
+                className={`text-2xl font-bold ${remainingQty < 0 ? "text-destructive" : "text-primary"}`}
+              >
                 {remainingQty} {form.unit} remaining
               </p>
             </div>
@@ -227,7 +340,9 @@ function AddStock() {
             <Button variant="outline" onClick={() => navigate({ to: "/stock-records" })}>
               <X className="mr-2 h-4 w-4" /> Cancel
             </Button>
-            <Button variant="secondary" onClick={() => save(true)}>Save and Add Another</Button>
+            <Button variant="secondary" onClick={() => save(true)}>
+              Save and Add Another
+            </Button>
             <Button onClick={() => save(false)}>
               <Save className="mr-2 h-4 w-4" /> Save Record
             </Button>

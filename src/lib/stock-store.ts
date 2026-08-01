@@ -37,14 +37,9 @@ export type SchoolInfo = {
   academicYear: string;
 };
 
-export const FOOD_ITEMS = [
-  "Rice",
-  "Beans",
-  "Maize Flour",
-  "Cooking Oil",
-  "Salt",
-  "Sugar",
-];
+export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar"];
+
+export const NEW_ITEM_VALUE = "__new_item__";
 
 export const UNITS = ["Kg", "Litre", "Bag", "Carton"];
 
@@ -63,51 +58,141 @@ const day = (offset: number) => {
 
 export const sampleStockData: StockRecord[] = [
   {
-    id: uid(), date: day(1), foodItem: "Rice", unit: "Kg", startedWith: 320, received: 200,
-    supplierName: "Huye Agro Supplies", supplierSignature: "J. Mukama", provided: 180,
-    cookName: "Alice Uwase", cookSignature: "A. Uwase", destroyed: 0, thrownAway: 4,
+    id: uid(),
+    date: day(1),
+    foodItem: "Rice",
+    unit: "Kg",
+    startedWith: 320,
+    received: 200,
+    supplierName: "Huye Agro Supplies",
+    supplierSignature: "Niyogisubizo Jeremie",
+    provided: 180,
+    cookName: "Niyogisubizo Jeremie",
+    cookSignature: "Niyogisubizo Jeremie",
+    destroyed: 0,
+    thrownAway: 4,
     explanation: "Normal daily feeding for 480 students.",
   },
   {
-    id: uid(), date: day(2), foodItem: "Beans", unit: "Kg", startedWith: 260, received: 120,
-    supplierName: "Ngoma Farmers Coop", supplierSignature: "P. Habimana", provided: 150,
-    cookName: "Jean Bosco", cookSignature: "J. Bosco", destroyed: 6, thrownAway: 2,
+    id: uid(),
+    date: day(2),
+    foodItem: "Beans",
+    unit: "Kg",
+    startedWith: 260,
+    received: 120,
+    supplierName: "Ngoma Farmers Coop",
+    supplierSignature: "Niyogisubizo Jeremie",
+    provided: 150,
+    cookName: "Niyogisubizo Jeremie",
+    cookSignature: "Niyogisubizo Jeremie",
+    destroyed: 6,
+    thrownAway: 2,
     explanation: "6kg destroyed due to weevils in old sack.",
   },
   {
-    id: uid(), date: day(3), foodItem: "Maize Flour", unit: "Kg", startedWith: 180, received: 90,
-    supplierName: "Rwabuye Milling", supplierSignature: "C. Niyonsaba", provided: 210,
-    cookName: "Alice Uwase", cookSignature: "A. Uwase", destroyed: 0, thrownAway: 0,
+    id: uid(),
+    date: day(3),
+    foodItem: "Maize Flour",
+    unit: "Kg",
+    startedWith: 180,
+    received: 90,
+    supplierName: "Rwabuye Milling",
+    supplierSignature: "Niyogisubizo Jeremie",
+    provided: 210,
+    cookName: "Niyogisubizo Jeremie",
+    cookSignature: "Niyogisubizo Jeremie",
+    destroyed: 0,
+    thrownAway: 0,
     explanation: "Porridge for morning break.",
   },
   {
-    id: uid(), date: day(4), foodItem: "Cooking Oil", unit: "Litre", startedWith: 60, received: 40,
-    supplierName: "Huye Agro Supplies", supplierSignature: "J. Mukama", provided: 55,
-    cookName: "Marie Claire", cookSignature: "M. Claire", destroyed: 0, thrownAway: 1,
+    id: uid(),
+    date: day(4),
+    foodItem: "Cooking Oil",
+    unit: "Litre",
+    startedWith: 60,
+    received: 40,
+    supplierName: "Huye Agro Supplies",
+    supplierSignature: "Niyogisubizo Jeremie",
+    provided: 55,
+    cookName: "Niyogisubizo Jeremie",
+    cookSignature: "Niyogisubizo Jeremie",
+    destroyed: 0,
+    thrownAway: 1,
     explanation: "1L spilled during transfer.",
   },
   {
-    id: uid(), date: day(6), foodItem: "Salt", unit: "Kg", startedWith: 30, received: 10,
-    supplierName: "Kigali Wholesale", supplierSignature: "E. Nkusi", provided: 8,
-    cookName: "Jean Bosco", cookSignature: "J. Bosco", destroyed: 0, thrownAway: 0,
+    id: uid(),
+    date: day(6),
+    foodItem: "Salt",
+    unit: "Kg",
+    startedWith: 30,
+    received: 10,
+    supplierName: "Kigali Wholesale",
+    supplierSignature: "Niyogisubizo Jeremie",
+    provided: 8,
+    cookName: "Niyogisubizo Jeremie",
+    cookSignature: "Niyogisubizo Jeremie",
+    destroyed: 0,
+    thrownAway: 0,
     explanation: "Routine usage.",
   },
   {
-    id: uid(), date: day(8), foodItem: "Sugar", unit: "Kg", startedWith: 75, received: 25,
-    supplierName: "Kigali Wholesale", supplierSignature: "E. Nkusi", provided: 62,
-    cookName: "Marie Claire", cookSignature: "M. Claire", destroyed: 2, thrownAway: 0,
+    id: uid(),
+    date: day(8),
+    foodItem: "Sugar",
+    unit: "Kg",
+    startedWith: 75,
+    received: 25,
+    supplierName: "Kigali Wholesale",
+    supplierSignature: "Niyogisubizo Jeremie",
+    provided: 62,
+    cookName: "Niyogisubizo Jeremie",
+    cookSignature: "Niyogisubizo Jeremie",
+    destroyed: 2,
+    thrownAway: 0,
     explanation: "2kg wet and destroyed after rain leak.",
   },
 ];
 
 export const sampleReleases: ReleaseRecord[] = [
-  { id: uid(), date: day(1), foodItem: "Rice", quantity: 180, cookName: "Alice Uwase", studentsFed: 480, mealType: "Lunch", notes: "Served with beans", cookSignature: "A. Uwase" },
-  { id: uid(), date: day(2), foodItem: "Maize Flour", quantity: 90, cookName: "Jean Bosco", studentsFed: 460, mealType: "Breakfast", notes: "Porridge", cookSignature: "J. Bosco" },
-  { id: uid(), date: day(3), foodItem: "Beans", quantity: 150, cookName: "Marie Claire", studentsFed: 475, mealType: "Lunch", notes: "", cookSignature: "M. Claire" },
+  {
+    id: uid(),
+    date: day(1),
+    foodItem: "Rice",
+    quantity: 180,
+    cookName: "Niyogisubizo Jeremie",
+    studentsFed: 480,
+    mealType: "Lunch",
+    notes: "Served with beans",
+    cookSignature: "Niyogisubizo Jeremie",
+  },
+  {
+    id: uid(),
+    date: day(2),
+    foodItem: "Maize Flour",
+    quantity: 90,
+    cookName: "Niyogisubizo Jeremie",
+    studentsFed: 460,
+    mealType: "Breakfast",
+    notes: "Porridge",
+    cookSignature: "Niyogisubizo Jeremie",
+  },
+  {
+    id: uid(),
+    date: day(3),
+    foodItem: "Beans",
+    quantity: 150,
+    cookName: "Niyogisubizo Jeremie",
+    studentsFed: 475,
+    mealType: "Lunch",
+    notes: "",
+    cookSignature: "Niyogisubizo Jeremie",
+  },
 ];
 
 export const defaultSchool: SchoolInfo = {
-  name: "Groupe Scolaire Huye",
+  name: "GS NKUBI",
   category: "Day School",
   number: "GS-2024-0417",
   district: "Huye",
@@ -141,7 +226,10 @@ function usePersistent<T>(key: string, initial: T) {
 }
 
 export function useStockRecords() {
-  const [records, setRecords, loaded] = usePersistent<StockRecord[]>("sfsms.stock", sampleStockData);
+  const [records, setRecords, loaded] = usePersistent<StockRecord[]>(
+    "sfsms.stock",
+    sampleStockData,
+  );
 
   const add = useCallback(
     (r: Omit<StockRecord, "id">) => setRecords((p) => [{ ...r, id: uid() }, ...p]),
@@ -161,7 +249,10 @@ export function useStockRecords() {
 }
 
 export function useReleases() {
-  const [releases, setReleases, loaded] = usePersistent<ReleaseRecord[]>("sfsms.releases", sampleReleases);
+  const [releases, setReleases, loaded] = usePersistent<ReleaseRecord[]>(
+    "sfsms.releases",
+    sampleReleases,
+  );
   const add = useCallback(
     (r: Omit<ReleaseRecord, "id">) => setReleases((p) => [{ ...r, id: uid() }, ...p]),
     [setReleases],
@@ -178,6 +269,21 @@ export function useSchoolInfo() {
   return { school, setSchool, loaded };
 }
 
+export function useFoodItems() {
+  const [foodItems, setFoodItems, loaded] = usePersistent<string[]>("sfsms.foodItems", FOOD_ITEMS);
+  const addFoodItem = useCallback(
+    (name: string) => {
+      const clean = name.trim();
+      if (!clean) return;
+      setFoodItems((p) =>
+        p.some((x) => x.toLowerCase() === clean.toLowerCase()) ? p : [...p, clean],
+      );
+    },
+    [setFoodItems],
+  );
+  return { foodItems, addFoodItem, loaded };
+}
+
 export function summarize(records: StockRecord[]) {
   const received = records.reduce((s, r) => s + r.received, 0);
   const released = records.reduce((s, r) => s + r.provided, 0);
@@ -187,13 +293,16 @@ export function summarize(records: StockRecord[]) {
 }
 
 export function byFoodItem(records: StockRecord[]) {
-  return FOOD_ITEMS.map((item) => {
-    const rows = records.filter((r) => r.foodItem === item);
-    return {
-      item,
-      received: rows.reduce((s, r) => s + r.received, 0),
-      released: rows.reduce((s, r) => s + r.provided, 0),
-      remaining: rows.reduce((s, r) => s + remaining(r), 0),
-    };
-  }).filter((r) => r.received || r.released || r.remaining);
+  const items = Array.from(new Set([...FOOD_ITEMS, ...records.map((r) => r.foodItem)]));
+  return items
+    .map((item) => {
+      const rows = records.filter((r) => r.foodItem === item);
+      return {
+        item,
+        received: rows.reduce((s, r) => s + r.received, 0),
+        released: rows.reduce((s, r) => s + r.provided, 0),
+        remaining: rows.reduce((s, r) => s + remaining(r), 0),
+      };
+    })
+    .filter((r) => r.received || r.released || r.remaining);
 }

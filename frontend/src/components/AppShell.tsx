@@ -131,21 +131,25 @@ export function AppShell({
               {(!collapsed || open) && <span className="truncate">{label}</span>}
             </Link>
           ))}
-        </nav>
 
-        <div className="border-t border-sidebar-border p-3">
+          {/* Divider */}
+          <div className="my-2 border-t border-sidebar-border" />
+
+          {/* Logout */}
           <button
             onClick={logout}
             title={collapsed && !open ? "Logout" : undefined}
             className={cn(
-              "flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-destructive/20 hover:text-sidebar-accent-foreground",
+              "flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-destructive/20 hover:text-destructive",
               collapsed && !open ? "justify-center px-0" : "gap-3 px-3",
             )}
           >
             <LogOut className="h-5 w-5 shrink-0" />
             {(!collapsed || open) && <span>Logout</span>}
           </button>
-        </div>
+        </nav>
+
+
       </aside>
 
       {open && (

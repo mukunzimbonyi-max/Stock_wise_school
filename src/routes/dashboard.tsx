@@ -155,7 +155,7 @@ function Dashboard() {
                 <PieChart>
                   <Pie data={perItem} dataKey="remaining" nameKey="item" innerRadius={55} outerRadius={90} paddingAngle={3}>
                     {perItem.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length] ?? "var(--chart-1)"} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />

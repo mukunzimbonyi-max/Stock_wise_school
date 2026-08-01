@@ -187,7 +187,7 @@ function Reports() {
                 <PieChart>
                   <Pie data={usage} dataKey="value" nameKey="item" innerRadius={55} outerRadius={90} paddingAngle={3}>
                     {usage.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length] ?? "var(--chart-1)"} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }} />

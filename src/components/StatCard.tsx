@@ -28,7 +28,7 @@ export function StatCard({
     <div className="card-surface hover-lift p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-muted-foreground">{label}</p>
+          <p className="text-sm font-medium leading-snug text-muted-foreground">{label}</p>
           <p className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
             {typeof value === "number" ? value.toLocaleString() : value}
             {unit && <span className="ml-1 text-base font-semibold text-muted-foreground">{unit}</span>}

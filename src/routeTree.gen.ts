@@ -14,6 +14,7 @@ import { Route as AddStockRouteImport } from './routes/add-stock'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FoodReleasedRouteImport } from './routes/food-released'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SchoolInformationRouteImport } from './routes/school-information'
 import { Route as StockRecordsRouteImport } from './routes/stock-records'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchoolInformationRoute = SchoolInformationRouteImport.update({
+  id: '/school-information',
+  path: '/school-information',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StockRecordsRoute = StockRecordsRouteImport.update({
   id: '/stock-records',
   path: '/stock-records',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
+  '/school-information': typeof SchoolInformationRoute
   '/stock-records': typeof StockRecordsRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
+  '/school-information': typeof SchoolInformationRoute
   '/stock-records': typeof StockRecordsRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
+  '/school-information': typeof SchoolInformationRoute
   '/stock-records': typeof StockRecordsRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/food-released'
     | '/reports'
+    | '/school-information'
     | '/stock-records'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/food-released'
     | '/reports'
+    | '/school-information'
     | '/stock-records'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/food-released'
     | '/reports'
+    | '/school-information'
     | '/stock-records'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +117,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   FoodReleasedRoute: typeof FoodReleasedRoute
   ReportsRoute: typeof ReportsRoute
+  SchoolInformationRoute: typeof SchoolInformationRoute
   StockRecordsRoute: typeof StockRecordsRoute
 }
 
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/school-information': {
+      id: '/school-information'
+      path: '/school-information'
+      fullPath: '/school-information'
+      preLoaderRoute: typeof SchoolInformationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stock-records': {
       id: '/stock-records'
       path: '/stock-records'
@@ -161,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   FoodReleasedRoute: FoodReleasedRoute,
   ReportsRoute: ReportsRoute,
+  SchoolInformationRoute: SchoolInformationRoute,
   StockRecordsRoute: StockRecordsRoute,
 }
 export const routeTree = rootRouteImport

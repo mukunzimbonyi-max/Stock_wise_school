@@ -120,12 +120,12 @@ function Login() {
       </nav>
 
       <div className="grid min-h-[calc(100vh-4rem)] lg:grid-cols-2">
-        <div className="relative hidden flex-col justify-between gradient-primary p-12 text-primary-foreground lg:flex">
+        <div className="relative hidden flex-col justify-between overflow-hidden gradient-primary p-8 text-primary-foreground lg:flex xl:p-10">
           <div className="flex w-full max-w-md items-center justify-between">
             <img
               src="/c.png"
               alt="Republic of Rwanda"
-              className="h-20 w-20 shrink-0 rounded-full bg-white object-contain p-1 shadow-md"
+              className="h-16 w-16 shrink-0 rounded-full bg-white object-contain p-1 shadow-md"
             />
             <div className="flex-1 px-2 text-center text-primary-foreground">
               <p className="text-xs font-bold uppercase tracking-wider">Huye District</p>
@@ -135,18 +135,18 @@ function Login() {
             <img
               src="/j.png"
               alt="GS NKUBI Logo"
-              className="h-20 w-20 shrink-0 rounded-full bg-white object-contain p-1 shadow-md"
+              className="h-16 w-16 shrink-0 rounded-full bg-white object-contain p-1 shadow-md"
             />
           </div>
           <div>
-            <h2 className="max-w-md text-4xl font-extrabold leading-tight">
+            <h2 className="max-w-md text-3xl font-extrabold leading-tight xl:text-4xl">
               Every kilogram accounted for, every meal recorded.
             </h2>
-            <p className="mt-4 max-w-md text-primary-foreground/80">
+            <p className="mt-3 max-w-md text-primary-foreground/80">
               Track food received, released to cooks, destroyed and remaining — replacing the paper
               stock book with a clear, reliable digital record.
             </p>
-            <div className="mt-10 grid max-w-md grid-cols-3 gap-4">
+            <div className="mt-8 grid max-w-md grid-cols-3 gap-4">
               {[
                 { k: "6", v: "Food items" },
                 { k: "480", v: "Students fed" },
@@ -159,12 +159,12 @@ function Login() {
               ))}
             </div>
           </div>
-          <div className="mt-8 rounded-2xl border border-primary-foreground/20 bg-primary-foreground/10 p-6 backdrop-blur-md">
-            <p className="mb-4 text-sm font-bold uppercase tracking-widest text-primary-foreground">
+          <div className="mt-6 rounded-2xl border border-primary-foreground/20 bg-primary-foreground/10 p-5 backdrop-blur-md">
+            <p className="mb-3 text-sm font-bold uppercase tracking-widest text-primary-foreground">
               Contact Information
             </p>
-            <div className="grid grid-cols-2 gap-4 text-primary-foreground">
-              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-3 transition-colors hover:bg-primary-foreground/15">
+            <div className="grid grid-cols-2 gap-3 text-primary-foreground">
+              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-2.5 transition-colors hover:bg-primary-foreground/15">
                 <PhoneCall className="h-5 w-5 shrink-0 opacity-70" />
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider opacity-70">
@@ -173,21 +173,21 @@ function Login() {
                   <p className="text-sm font-bold tracking-wide">0788 479 772</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-3 transition-colors hover:bg-primary-foreground/15">
+              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-2.5 transition-colors hover:bg-primary-foreground/15">
                 <PhoneCall className="h-5 w-5 shrink-0 opacity-70" />
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider opacity-70">DOS</p>
                   <p className="text-sm font-bold tracking-wide">0788 479 883</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-3 transition-colors hover:bg-primary-foreground/15">
+              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-2.5 transition-colors hover:bg-primary-foreground/15">
                 <PhoneCall className="h-5 w-5 shrink-0 opacity-70" />
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider opacity-70">DOD</p>
                   <p className="text-sm font-bold tracking-wide">0788 848 395</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-3 transition-colors hover:bg-primary-foreground/15">
+              <div className="flex items-center gap-3 rounded-lg bg-primary-foreground/5 p-2.5 transition-colors hover:bg-primary-foreground/15">
                 <PhoneCall className="h-5 w-5 shrink-0 opacity-70" />
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider opacity-70">

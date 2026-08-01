@@ -265,19 +265,6 @@ function Login() {
                     flipped ? "pointer-events-none" : ""
                   }`}
                 >
-                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-                    <p className="font-semibold text-primary">Demo login</p>
-                    <p className="mt-0.5 text-muted-foreground">
-                      Email:{" "}
-                      <span className="font-mono font-medium text-foreground">
-                        jeremie@gsnkubi.rw
-                      </span>
-                      {" "}
-                      · Password:{" "}
-                      <span className="font-mono font-medium text-foreground">pass123</span>
-                    </p>
-                  </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="email">Email address</Label>
                     <div className="relative">

@@ -47,12 +47,31 @@ authRouter.post("/register", async (req, res) => {
   }
 });
 
+const DEMO_USER = {
+  id: 1,
+  name: "Niyogisubizo Jeremie",
+  email: "jeremie@gsnkubi.rw",
+  password: "pass123",
+};
+
 authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Demo user login — works without a database
+    if (email.toLowerCase() === DEMO_USER.email) {
+      if (password !== DEMO_USER.password) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+      const token = jwt.sign({ id: DEMO_USER.id, email: DEMO_USER.email }, JWT_SECRET, { expiresIn: "7d" });
+      return res.status(200).json({
+        user: { id: DEMO_USER.id, name: DEMO_USER.name, email: DEMO_USER.email },
+        token,
+      });
     }
 
     // Check if user exists

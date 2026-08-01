@@ -86,7 +86,14 @@ function FoodReleased() {
       toast.error("Quantity released must be greater than zero");
       return;
     }
-    add({ ...form, remaining: form.startedWith - form.quantity });
+    
+    const remainingStock = form.startedWith - form.quantity;
+    if (remainingStock < 0) {
+      toast.error(`Cannot release ${form.quantity}. Only ${form.startedWith} in stock.`);
+      return;
+    }
+
+    add({ ...form, remaining: remainingStock });
     toast.success("Food release recorded", {
       description: `${form.quantity} of ${form.foodItem} for ${form.studentsFed} students`,
     });

@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Calculator, Save, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   useFoodItems,
   useSchoolInfo,
   useStockRecords,
+  byFoodItem,
 } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/add-stock")({
@@ -76,7 +77,7 @@ function Section({
 }
 
 function AddStock() {
-  const { add } = useStockRecords();
+  const { records, add } = useStockRecords();
   const { school, setSchool } = useSchoolInfo();
   const { foodItems, addFoodItem } = useFoodItems();
   const navigate = useNavigate();
@@ -92,19 +93,24 @@ function AddStock() {
   const num = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement>) =>
     set(k, Number(e.target.value) || 0);
 
-  const remainingQty =
-    form.startedWith + form.received - form.provided - form.destroyed - form.thrownAway;
+  const remainingQty = form.startedWith + form.received;
 
   const effectiveItem = customMode && customItem.trim() ? customItem.trim() : form.foodItem;
+
+  useEffect(() => {
+    if (!customMode) {
+      const currentStock = byFoodItem(records).find((r) => r.item === form.foodItem)?.remaining || 0;
+      setForm((f) => ({ ...f, startedWith: currentStock }));
+    } else {
+      setForm((f) => ({ ...f, startedWith: 0 }));
+    }
+  }, [form.foodItem, records, customMode]);
 
   const validate = () => {
     const next: Errors = {};
     if (!form.date) next.date = "Date is required";
     if (!form.supplierName.trim()) next.supplierName = "Supplier name is required";
-    if (form.provided > 0 && !form.cookName.trim())
-      next.cookName = "Cook name is required when food is provided";
     if (form.startedWith < 0 || form.received < 0) next.received = "Quantities cannot be negative";
-    if (remainingQty < 0) next.explanation = "Remaining stock is negative — check your quantities";
     if (customMode && !customItem.trim()) next.customItem = "Enter the name of the new item";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -272,53 +278,7 @@ function AddStock() {
           </div>
         </Section>
 
-        <Section title="Food Release Information" description="Quantity handed over to the kitchen">
-          <div className="space-y-1.5">
-            <Label>Quantity Provided</Label>
-            <Input type="number" min={0} value={form.provided} onChange={num("provided")} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Cook Name</Label>
-            <Input
-              value={form.cookName}
-              onChange={(e) => set("cookName", e.target.value)}
-              placeholder="Niyogisubizo Jeremie"
-            />
-            {errors.cookName && <p className="text-xs text-destructive">{errors.cookName}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Cook Signature</Label>
-            <Input
-              value={form.cookSignature}
-              onChange={(e) => set("cookSignature", e.target.value)}
-              placeholder="Initials of cook"
-            />
-          </div>
-        </Section>
 
-        <Section
-          title="Stock Loss Information"
-          description="Record any food destroyed or thrown away"
-        >
-          <div className="space-y-1.5">
-            <Label>Quantity Destroyed</Label>
-            <Input type="number" min={0} value={form.destroyed} onChange={num("destroyed")} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Quantity Thrown Away</Label>
-            <Input type="number" min={0} value={form.thrownAway} onChange={num("thrownAway")} />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-            <Label>Explanation</Label>
-            <Textarea
-              value={form.explanation}
-              onChange={(e) => set("explanation", e.target.value)}
-              placeholder="Reason for the loss or any notes"
-              rows={3}
-            />
-            {errors.explanation && <p className="text-xs text-destructive">{errors.explanation}</p>}
-          </div>
-        </Section>
 
         <div className="card-surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -327,7 +287,7 @@ function AddStock() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">
-                Started with + Received − Provided − Destroyed − Thrown away
+                Started with + Received
               </p>
               <p
                 className={`text-2xl font-bold ${remainingQty < 0 ? "text-destructive" : "text-primary"}`}

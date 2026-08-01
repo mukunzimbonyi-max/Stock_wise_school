@@ -70,8 +70,14 @@ function FoodReleased() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.cookName.trim()) return toast.error("Cook name is required");
-    if (form.quantity <= 0) return toast.error("Quantity released must be greater than zero");
+    if (!form.cookName.trim()) {
+      toast.error("Cook name is required");
+      return;
+    }
+    if (form.quantity <= 0) {
+      toast.error("Quantity released must be greater than zero");
+      return;
+    }
     add(form);
     toast.success("Food release recorded", {
       description: `${form.quantity} of ${form.foodItem} for ${form.studentsFed} students`,

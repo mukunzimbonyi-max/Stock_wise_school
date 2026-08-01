@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -56,18 +57,23 @@ export function AppShell({
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const user = useAuthStore((state) => state.user);
+  const logoutFn = useAuthStore((state) => state.logout);
 
   useEffect(() => setOpen(false), [pathname]);
 
   const logout = () => {
-    try {
-      localStorage.removeItem("sfsms.session");
-    } catch {
-      /* ignore */
-    }
+    logoutFn();
     toast.success("You have been logged out");
     navigate({ to: "/" });
   };
+
+  const initials = user?.name
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   return (
     <div className="min-h-screen bg-background">
@@ -188,10 +194,10 @@ export function AppShell({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-primary text-sm font-bold text-primary-foreground">
-                      AN
+                      {initials}
                     </div>
                     <div className="hidden text-left leading-tight sm:block">
-                      <p className="text-sm font-semibold">Aline Niyonkuru</p>
+                      <p className="text-sm font-semibold">{user?.name || "User"}</p>
                       <p className="text-xs text-muted-foreground">Stock Manager</p>
                     </div>
                   </button>
@@ -199,9 +205,9 @@ export function AppShell({
                 <DropdownMenuContent align="end" className="w-56 rounded-xl">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Aline Niyonkuru</p>
+                      <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        stockmanager@gshuye.rw
+                        {user?.email || "No email"}
                       </p>
                     </div>
                   </DropdownMenuLabel>

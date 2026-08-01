@@ -61,7 +61,7 @@ function Login() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${import.meta.env["VITE_API_URL"]}/api/auth/login`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -96,7 +96,7 @@ function Login() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${import.meta.env["VITE_API_URL"]}/api/auth/register`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), email, password }),
@@ -117,6 +117,12 @@ function Login() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const demoLogin = () => {
+    loginFn({ id: 999, name: "Demo User", email: "demo@school.rw" }, "demo-token");
+    toast.success("Demo mode", { description: "Viewing dashboard as Demo User." });
+    navigate({ to: "/dashboard" });
   };
 
   return (
@@ -326,9 +332,14 @@ function Login() {
                     </button>
                   </div>
 
-                  <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
-                    {isLoading ? "Logging in..." : "Login"}
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
+                      {isLoading ? "Logging in..." : "Login"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={demoLogin} disabled={isLoading} className="h-11 w-full text-base font-semibold border-primary/20 hover:bg-primary/5">
+                      Use Demo Version
+                    </Button>
+                  </div>
 
                   <p className="text-center text-sm">
                     Don&apos;t have an account?{" "}
@@ -436,9 +447,14 @@ function Login() {
                     )}
                   </div>
 
-                  <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
-                    {isLoading ? "Creating account..." : "Create Account"}
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
+                      {isLoading ? "Creating account..." : "Create Account"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={demoLogin} disabled={isLoading} className="h-11 w-full text-base font-semibold border-primary/20 hover:bg-primary/5">
+                      Use Demo Version
+                    </Button>
+                  </div>
                   <p className="text-center text-sm">
                     Already have an account?{" "}
                     <button

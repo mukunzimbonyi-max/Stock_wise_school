@@ -19,6 +19,12 @@ app.use(
       // Allow requests with no origin (curl, Postman, server-to-server)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
+      
+      // Allow local network IPs for development testing across devices
+      if (/^http:\/\/(192\.168|10|172\.(1[6-9]|2[0-9]|3[0-1]))\.\d+\.\d+:\d+$/.test(origin)) {
+        return callback(null, true);
+      }
+      
       callback(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,

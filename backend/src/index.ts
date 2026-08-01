@@ -24,8 +24,8 @@ async function initDB() {
 }
 
 initDB().then(() => {
-  app.listen(port, () => {
-    console.log(`Stock Wise School backend listening on http://127.0.0.1:${port}`);
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Stock Wise School backend listening on port ${port} (0.0.0.0)`);
   });
 });
 

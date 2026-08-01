@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 
 import { pool } from "./db.js";
+import { authRouter } from "./routes/auth.js";
 import { stockRouter } from "./routes/stock.js";
 
 export const app = express();
@@ -18,4 +19,5 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
+app.use("/api/auth", authRouter);
 app.use("/api/stock", stockRouter);

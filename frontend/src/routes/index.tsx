@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuthStore } from "@/store/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,8 +30,9 @@ export const Route = createFileRoute("/")({
 
 function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("stockmanager@gshuye.rw");
-  const [password, setPassword] = useState("school2026");
+  const loginFn = useAuthStore((state) => state.login);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -38,6 +40,7 @@ function Login() {
   const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [signupErrors, setSignupErrors] = useState<{
     name?: string;
     email?: string;
@@ -48,7 +51,7 @@ function Login() {
     document.getElementById("signin")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {};
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) next.email = "Enter a valid email address";
@@ -56,16 +59,32 @@ function Login() {
     setErrors(next);
     if (Object.keys(next).length) return;
 
+    setIsLoading(true);
     try {
-      localStorage.setItem("sfsms.session", JSON.stringify({ email, remember }));
-    } catch {
-      /* ignore */
+      const res = await fetch(`${import.meta.env["VITE_API_URL"]}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast.error("Login failed", { description: data.error || "Invalid credentials" });
+        setIsLoading(false);
+        return;
+      }
+
+      loginFn(data.user, data.token);
+      toast.success("Welcome back!", { description: "Signed in successfully." });
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error("Login failed", { description: "Could not connect to the server." });
+    } finally {
+      setIsLoading(false);
     }
-    toast.success("Welcome back!", { description: "Signed in successfully." });
-    navigate({ to: "/dashboard" });
   };
 
-  const signup = (e: React.FormEvent) => {
+  const signup = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof signupErrors = {};
     if (!name.trim()) next.name = "Full name is required";
@@ -75,22 +94,29 @@ function Login() {
     setSignupErrors(next);
     if (Object.keys(next).length) return;
 
+    setIsLoading(true);
     try {
-      const users = JSON.parse(localStorage.getItem("sfsms.users") || "[]") as Array<{
-        name: string;
-        email: string;
-        password: string;
-      }>;
-      users.push({ name: name.trim(), email, password });
-      localStorage.setItem("sfsms.users", JSON.stringify(users));
-      localStorage.setItem("sfsms.session", JSON.stringify({ email, remember }));
-    } catch {
-      /* ignore */
+      const res = await fetch(`${import.meta.env["VITE_API_URL"]}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email, password }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast.error("Signup failed", { description: data.error || "Could not create account" });
+        setIsLoading(false);
+        return;
+      }
+
+      loginFn(data.user, data.token);
+      toast.success("Account created!", { description: "Welcome to GS NKUBI Food Stock Management." });
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error("Signup failed", { description: "Could not connect to the server." });
+    } finally {
+      setIsLoading(false);
     }
-    toast.success("Account created!", {
-      description: "Welcome to GS NKUBI Food Stock Management.",
-    });
-    navigate({ to: "/dashboard" });
   };
 
   return (
@@ -300,12 +326,10 @@ function Login() {
                     </button>
                   </div>
 
-                  <Button type="submit" className="h-11 w-full text-base font-semibold">
-                    Login
+                  <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
+                    {isLoading ? "Logging in..." : "Login"}
                   </Button>
-                  <p className="text-center text-xs text-muted-foreground">
-                    Demo account is pre-filled — just press Login.
-                  </p>
+
                   <p className="text-center text-sm">
                     Don&apos;t have an account?{" "}
                     <button
@@ -412,8 +436,8 @@ function Login() {
                     )}
                   </div>
 
-                  <Button type="submit" className="h-11 w-full text-base font-semibold">
-                    Create Account
+                  <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
+                    {isLoading ? "Creating account..." : "Create Account"}
                   </Button>
                   <p className="text-center text-sm">
                     Already have an account?{" "}

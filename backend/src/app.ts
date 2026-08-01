@@ -7,7 +7,14 @@ import { stockRouter } from "./routes/stock.js";
 
 export const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true, // reflect the request origin, allows any origin
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 app.get("/api/health", async (_req, res) => {

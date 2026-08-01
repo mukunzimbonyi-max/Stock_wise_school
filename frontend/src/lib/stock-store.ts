@@ -21,12 +21,14 @@ export type ReleaseRecord = {
   id: string;
   date: string;
   foodItem: string;
+  startedWith: number;
   quantity: number;
   cookName: string;
   studentsFed: number;
   mealType: string;
   notes: string;
   cookSignature: string;
+  remaining?: number;
 };
 
 export type SchoolInfo = {
@@ -160,34 +162,40 @@ export const sampleReleases: ReleaseRecord[] = [
     id: uid(),
     date: day(1),
     foodItem: "Rice",
+    startedWith: 520,
     quantity: 180,
     cookName: "Niyogisubizo Jeremie",
     studentsFed: 480,
     mealType: "Lunch",
     notes: "Served with beans",
     cookSignature: "Niyogisubizo Jeremie",
+    remaining: 340,
   },
   {
     id: uid(),
     date: day(2),
     foodItem: "Maize Flour",
+    startedWith: 270,
     quantity: 90,
     cookName: "Niyogisubizo Jeremie",
     studentsFed: 460,
     mealType: "Breakfast",
     notes: "Porridge",
     cookSignature: "Niyogisubizo Jeremie",
+    remaining: 180,
   },
   {
     id: uid(),
     date: day(3),
     foodItem: "Beans",
+    startedWith: 380,
     quantity: 150,
     cookName: "Niyogisubizo Jeremie",
     studentsFed: 475,
     mealType: "Lunch",
     notes: "",
     cookSignature: "Niyogisubizo Jeremie",
+    remaining: 230,
   },
 ];
 
@@ -284,25 +292,51 @@ export function useFoodItems() {
   return { foodItems, addFoodItem, loaded };
 }
 
-export function summarize(records: StockRecord[]) {
-  const received = records.reduce((s, r) => s + r.received, 0);
-  const released = records.reduce((s, r) => s + r.provided, 0);
+export function summarize(records: StockRecord[], releases: ReleaseRecord[] = []) {
+  const perItem = byFoodItem(records, releases);
+  const received = perItem.reduce((s, r) => s + r.received, 0);
+  const released = perItem.reduce((s, r) => s + r.released, 0);
   const destroyed = records.reduce((s, r) => s + r.destroyed + r.thrownAway, 0);
-  const stock = records.reduce((s, r) => s + remaining(r), 0);
+  const stock = perItem.reduce((s, r) => s + r.remaining, 0);
   return { received, released, destroyed, stock };
 }
 
-export function byFoodItem(records: StockRecord[]) {
-  const items = Array.from(new Set([...FOOD_ITEMS, ...records.map((r) => r.foodItem)]));
-  return items
-    .map((item) => {
-      const rows = records.filter((r) => r.foodItem === item);
-      return {
-        item,
-        received: rows.reduce((s, r) => s + r.received, 0),
-        released: rows.reduce((s, r) => s + r.provided, 0),
-        remaining: rows.reduce((s, r) => s + remaining(r), 0),
-      };
-    })
-    .filter((r) => r.received || r.released || r.remaining);
+export function byFoodItem(records: StockRecord[], releases: ReleaseRecord[] = []) {
+  const items = Array.from(new Set([
+    ...FOOD_ITEMS, 
+    ...records.map((r) => r.foodItem),
+    ...releases.map((r) => r.foodItem)
+  ]));
+  
+  return items.map((item) => {
+    const itemRecords = records.filter(r => r.foodItem === item);
+    const itemReleases = releases.filter(r => r.foodItem === item);
+    
+    const received = itemRecords.reduce((s, r) => s + r.received, 0);
+    const released = itemRecords.reduce((s, r) => s + r.provided, 0) + 
+                     itemReleases.reduce((s, r) => s + r.quantity, 0);
+                     
+    const allEvents = [
+      ...itemRecords.map(r => ({ ...r, type: 'stock', time: new Date(r.date).getTime() })),
+      ...itemReleases.map(r => ({ ...r, type: 'release', time: new Date(r.date).getTime() }))
+    ].sort((a, b) => a.time - b.time);
+
+    let currentStock = 0;
+    for (const event of allEvents) {
+      if (event.type === 'stock') {
+        const r = event as (StockRecord & { type: string });
+        currentStock = r.startedWith + r.received - totalUsed(r);
+      } else {
+        const r = event as (ReleaseRecord & { type: string });
+        currentStock -= r.quantity;
+      }
+    }
+
+    return {
+      item,
+      received,
+      released,
+      remaining: currentStock,
+    };
+  }).filter((r) => r.received || r.released || r.remaining);
 }

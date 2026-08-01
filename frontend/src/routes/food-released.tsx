@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Soup, Trash2, Users, Utensils } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useFoodItems, useReleases, type ReleaseRecord } from "@/lib/stock-store";
+import { useFoodItems, useReleases, type ReleaseRecord, useStockRecords, byFoodItem } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/food-released")({
   head: () => ({
@@ -49,11 +49,13 @@ const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 function FoodReleased() {
   const { releases, add, remove } = useReleases();
   const { foodItems } = useFoodItems();
+  const { records } = useStockRecords();
   const [search, setSearch] = useState("");
   const [deleting, setDeleting] = useState<ReleaseRecord | null>(null);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     foodItem: "Rice",
+    startedWith: 0,
     quantity: 0,
     cookName: "",
     studentsFed: 0,
@@ -61,6 +63,11 @@ function FoodReleased() {
     notes: "",
     cookSignature: "",
   });
+
+  useEffect(() => {
+    const currentStock = byFoodItem(records, releases).find((r) => r.item === form.foodItem)?.remaining || 0;
+    setForm((f) => ({ ...f, startedWith: currentStock }));
+  }, [form.foodItem, records, releases]);
 
   const rows = releases.filter((r) =>
     `${r.foodItem} ${r.cookName} ${r.mealType}`.toLowerCase().includes(search.toLowerCase()),
@@ -79,7 +86,7 @@ function FoodReleased() {
       toast.error("Quantity released must be greater than zero");
       return;
     }
-    add(form);
+    add({ ...form, remaining: form.startedWith - form.quantity });
     toast.success("Food release recorded", {
       description: `${form.quantity} of ${form.foodItem} for ${form.studentsFed} students`,
     });
@@ -144,12 +151,30 @@ function FoodReleased() {
               </Select>
             </div>
             <div className="space-y-1.5">
+              <Label>Started With</Label>
+              <Input
+                type="number"
+                min={0}
+                value={form.startedWith}
+                onChange={(e) => setForm({ ...form, startedWith: Number(e.target.value) || 0 })}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label>Quantity Released</Label>
               <Input
                 type="number"
                 min={0}
                 value={form.quantity}
                 onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) || 0 })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Remaining</Label>
+              <Input
+                type="number"
+                value={form.startedWith - form.quantity}
+                readOnly
+                className="bg-muted font-bold text-primary"
               />
             </div>
             <div className="space-y-1.5">
@@ -221,7 +246,9 @@ function FoodReleased() {
                   {[
                     "Date",
                     "Food Item",
+                    "Started With",
                     "Quantity",
+                    "Remaining",
                     "Cook Name",
                     "Students Fed",
                     "Meal Type",
@@ -243,7 +270,9 @@ function FoodReleased() {
                   >
                     <td className="whitespace-nowrap px-4 py-3">{r.date}</td>
                     <td className="px-4 py-3 font-medium">{r.foodItem}</td>
+                    <td className="px-4 py-3">{r.startedWith ?? "—"}</td>
                     <td className="px-4 py-3">{r.quantity}</td>
+                    <td className="px-4 py-3 font-semibold text-primary">{r.remaining ?? "—"}</td>
                     <td className="whitespace-nowrap px-4 py-3">{r.cookName}</td>
                     <td className="px-4 py-3">{r.studentsFed}</td>
                     <td className="px-4 py-3">
@@ -272,7 +301,7 @@ function FoodReleased() {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
+                    <td colSpan={11} className="px-4 py-10 text-center text-muted-foreground">
                       No releases recorded yet.
                     </td>
                   </tr>

@@ -21,6 +21,7 @@ import {
   useSchoolInfo,
   useStockRecords,
   byFoodItem,
+  useReleases,
 } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/add-stock")({
@@ -78,6 +79,7 @@ function Section({
 
 function AddStock() {
   const { records, add } = useStockRecords();
+  const { releases } = useReleases();
   const { school, setSchool } = useSchoolInfo();
   const { foodItems, addFoodItem } = useFoodItems();
   const navigate = useNavigate();
@@ -99,12 +101,12 @@ function AddStock() {
 
   useEffect(() => {
     if (!customMode) {
-      const currentStock = byFoodItem(records).find((r) => r.item === form.foodItem)?.remaining || 0;
+      const currentStock = byFoodItem(records, releases).find((r) => r.item === form.foodItem)?.remaining || 0;
       setForm((f) => ({ ...f, startedWith: currentStock }));
     } else {
       setForm((f) => ({ ...f, startedWith: 0 }));
     }
-  }, [form.foodItem, records, customMode]);
+  }, [form.foodItem, records, releases, customMode]);
 
   const validate = () => {
     const next: Errors = {};

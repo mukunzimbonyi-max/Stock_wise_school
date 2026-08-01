@@ -43,6 +43,7 @@ import {
   remaining,
   summarize,
   useStockRecords,
+  useReleases,
 } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/dashboard")({
@@ -76,6 +77,7 @@ const CHART_COLORS = [
 
 function Dashboard() {
   const { records } = useStockRecords();
+  const { releases } = useReleases();
   const [search, setSearch] = useState("");
   const [period, setPeriod] = useState<"annual" | "monthly" | "daily">("annual");
   const [year, setYear] = useState("all");
@@ -128,13 +130,29 @@ function Dashboard() {
     [records, year, month, date],
   );
 
-  const stats = useMemo(() => summarize(filtered), [filtered]);
-  const perItem = useMemo(() => byFoodItem(filtered), [filtered]);
+  const filteredReleases = useMemo(
+    () =>
+      releases.filter((r) => {
+        if (year !== "all" && r.date.slice(0, 4) !== year) return false;
+        if (month !== "all" && r.date.slice(0, 7) !== month) return false;
+        if (date && r.date !== date) return false;
+        return true;
+      }),
+    [releases, year, month, date],
+  );
+
+  const stats = useMemo(() => summarize(filtered, filteredReleases), [filtered, filteredReleases]);
+  const perItem = useMemo(() => byFoodItem(filtered, filteredReleases), [filtered, filteredReleases]);
   const low = perItem.filter((i) => i.remaining < LOW_STOCK_THRESHOLD);
 
   const movement = useMemo(() => {
     const map = new Map<string, { label: string; received: number; released: number }>();
-    for (const r of [...filtered].sort((a, b) => a.date.localeCompare(b.date))) {
+    const all = [
+      ...filtered.map(r => ({ date: r.date, type: 'stock', received: r.received, released: r.provided })),
+      ...filteredReleases.map(r => ({ date: r.date, type: 'release', received: 0, released: r.quantity }))
+    ].sort((a, b) => a.date.localeCompare(b.date));
+
+    for (const r of all) {
       let key: string;
       let label: string;
       if (period === "daily") {
@@ -152,11 +170,11 @@ function Dashboard() {
       }
       const cur = map.get(key) ?? { label, received: 0, released: 0 };
       cur.received += r.received;
-      cur.released += r.provided;
+      cur.released += r.released;
       map.set(key, cur);
     }
     return [...map.values()];
-  }, [filtered, period, year]);
+  }, [filtered, filteredReleases, period, year]);
 
   const recent = useMemo(
     () => [...filtered].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6),

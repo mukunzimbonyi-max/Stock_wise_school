@@ -111,12 +111,6 @@ function StockRecords() {
       "Received",
       "Supplier",
       "Supplier Signature",
-      "Provided",
-      "Cook",
-      "Cook Signature",
-      "Destroyed",
-      "Thrown Away",
-      "Total Used",
       "Remaining",
       "Explanation",
     ];
@@ -127,12 +121,6 @@ function StockRecords() {
       r.received,
       r.supplierName,
       r.supplierSignature,
-      r.provided,
-      r.cookName,
-      r.cookSignature,
-      r.destroyed,
-      r.thrownAway,
-      totalUsed(r),
       remaining(r),
       `"${r.explanation.replace(/"/g, "'")}"`,
     ]);
@@ -274,12 +262,6 @@ function StockRecords() {
                     "Received",
                     "Supplier Name",
                     "Supplier Signature",
-                    "Provided",
-                    "Cook Name",
-                    "Cook Signature",
-                    "Destroyed",
-                    "Thrown Away",
-                    "Total Used",
                     "Remaining Stock",
                     "Explanation",
                     "Actions",
@@ -306,14 +288,6 @@ function StockRecords() {
                       <td className="whitespace-nowrap px-4 py-3 italic text-muted-foreground">
                         {r.supplierSignature}
                       </td>
-                      <td className="px-4 py-3">{r.provided}</td>
-                      <td className="whitespace-nowrap px-4 py-3">{r.cookName}</td>
-                      <td className="whitespace-nowrap px-4 py-3 italic text-muted-foreground">
-                        {r.cookSignature}
-                      </td>
-                      <td className="px-4 py-3">{r.destroyed}</td>
-                      <td className="px-4 py-3">{r.thrownAway}</td>
-                      <td className="px-4 py-3 font-medium">{totalUsed(r)}</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${rem < LOW_STOCK_THRESHOLD ? "bg-warning/15 text-warning" : "bg-success/15 text-success"}`}
@@ -418,12 +392,6 @@ function StockRecords() {
                 ["Received", `${viewing.received} ${viewing.unit}`],
                 ["Supplier", viewing.supplierName],
                 ["Supplier Signature", viewing.supplierSignature],
-                ["Provided", `${viewing.provided} ${viewing.unit}`],
-                ["Cook", viewing.cookName],
-                ["Cook Signature", viewing.cookSignature],
-                ["Destroyed", `${viewing.destroyed} ${viewing.unit}`],
-                ["Thrown Away", `${viewing.thrownAway} ${viewing.unit}`],
-                ["Total Used", `${totalUsed(viewing)} ${viewing.unit}`],
                 ["Remaining", `${remaining(viewing)} ${viewing.unit}`],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-lg bg-muted/60 p-3">
@@ -478,9 +446,6 @@ function StockRecords() {
                 [
                   ["startedWith", "Started with"],
                   ["received", "Received"],
-                  ["provided", "Provided"],
-                  ["destroyed", "Destroyed"],
-                  ["thrownAway", "Thrown away"],
                 ] as const
               ).map(([key, label]) => (
                 <div key={key} className="space-y-1.5">

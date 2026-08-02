@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AddStockRouteImport } from './routes/add-stock'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FoodDestroyedRouteImport } from './routes/food-destroyed'
 import { Route as FoodReleasedRouteImport } from './routes/food-released'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SchoolInformationRouteImport } from './routes/school-information'
@@ -31,6 +32,11 @@ const AddStockRoute = AddStockRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoodDestroyedRoute = FoodDestroyedRouteImport.update({
+  id: '/food-destroyed',
+  path: '/food-destroyed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FoodReleasedRoute = FoodReleasedRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add-stock': typeof AddStockRoute
   '/dashboard': typeof DashboardRoute
+  '/food-destroyed': typeof FoodDestroyedRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
   '/school-information': typeof SchoolInformationRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add-stock': typeof AddStockRoute
   '/dashboard': typeof DashboardRoute
+  '/food-destroyed': typeof FoodDestroyedRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
   '/school-information': typeof SchoolInformationRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/add-stock': typeof AddStockRoute
   '/dashboard': typeof DashboardRoute
+  '/food-destroyed': typeof FoodDestroyedRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
   '/school-information': typeof SchoolInformationRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/add-stock'
     | '/dashboard'
+    | '/food-destroyed'
     | '/food-released'
     | '/reports'
     | '/school-information'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/add-stock'
     | '/dashboard'
+    | '/food-destroyed'
     | '/food-released'
     | '/reports'
     | '/school-information'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/add-stock'
     | '/dashboard'
+    | '/food-destroyed'
     | '/food-released'
     | '/reports'
     | '/school-information'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddStockRoute: typeof AddStockRoute
   DashboardRoute: typeof DashboardRoute
+  FoodDestroyedRoute: typeof FoodDestroyedRoute
   FoodReleasedRoute: typeof FoodReleasedRoute
   ReportsRoute: typeof ReportsRoute
   SchoolInformationRoute: typeof SchoolInformationRoute
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/food-destroyed': {
+      id: '/food-destroyed'
+      path: '/food-destroyed'
+      fullPath: '/food-destroyed'
+      preLoaderRoute: typeof FoodDestroyedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/food-released': {
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddStockRoute: AddStockRoute,
   DashboardRoute: DashboardRoute,
+  FoodDestroyedRoute: FoodDestroyedRoute,
   FoodReleasedRoute: FoodReleasedRoute,
   ReportsRoute: ReportsRoute,
   SchoolInformationRoute: SchoolInformationRoute,

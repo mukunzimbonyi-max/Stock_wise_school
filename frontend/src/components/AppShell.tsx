@@ -14,6 +14,7 @@ import {
   Search,
   ChevronsLeft,
   ChevronsRight,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ const NAV = [
   { to: "/stock-records", label: "Stock Records", icon: Table2 },
   { to: "/add-stock", label: "Add Stock", icon: PlusCircle },
   { to: "/food-released", label: "Food Released", icon: Soup },
+  { to: "/food-destroyed", label: "Food Destroyed", icon: Trash2 },
   { to: "/reports", label: "Report", icon: FileBarChart },
   { to: "/school-information", label: "School Information", icon: School },
   { to: "/settings", label: "Settings", icon: Settings },

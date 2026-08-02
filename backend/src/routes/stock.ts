@@ -180,10 +180,10 @@ stockRouter.put("/school", async (req, res) => {
 stockRouter.get("/food-items", async (_req, res) => {
   try {
     const result = await pool.query("SELECT name FROM food_items ORDER BY name");
-    if (result.rows.length === 0) {
-      return res.json(["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar", "Vegetables"]);
-    }
-    res.json(result.rows.map((r: { name: string }) => r.name));
+    const defaultItems = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar", "Vegetables"];
+    const dbItems = result.rows.map((r: { name: string }) => r.name);
+    const allItems = Array.from(new Set([...defaultItems, ...dbItems])).sort();
+    res.json(allItems);
   } catch (err) {
     console.error("GET /api/stock/food-items error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -212,13 +212,17 @@ stockRouter.post("/food-items", async (req, res) => {
 stockRouter.get("/public-stats", async (_req, res) => {
   try {
     const [itemsResult, releasesResult, recordsResult] = await Promise.all([
-      pool.query("SELECT COUNT(*) FROM food_items"),
+      pool.query("SELECT name FROM food_items"),
       pool.query("SELECT COALESCE(SUM(students_fed), 0) AS total_students FROM releases"),
       pool.query("SELECT COUNT(*) FROM records"),
     ]);
 
+    const defaultItems = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar", "Vegetables"];
+    const dbItems = itemsResult.rows.map((r: { name: string }) => r.name);
+    const uniqueItemsCount = new Set([...defaultItems, ...dbItems]).size;
+
     res.json({
-      foodItems: Math.max(7, parseInt(itemsResult.rows[0].count) || 0),
+      foodItems: uniqueItemsCount,
       studentsFed: parseInt(releasesResult.rows[0].total_students) || 0,
       totalRecords: parseInt(recordsResult.rows[0].count) || 0,
     });

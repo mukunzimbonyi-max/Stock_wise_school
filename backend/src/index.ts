@@ -19,6 +19,7 @@ async function initDB() {
 
       CREATE TABLE IF NOT EXISTS records (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         date DATE NOT NULL,
         food_item VARCHAR(255) NOT NULL,
         unit VARCHAR(50) NOT NULL,
@@ -37,6 +38,7 @@ async function initDB() {
 
       CREATE TABLE IF NOT EXISTS release_records (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         date DATE NOT NULL,
         food_item VARCHAR(255) NOT NULL,
         started_with NUMERIC NOT NULL DEFAULT 0,
@@ -63,6 +65,10 @@ async function initDB() {
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) UNIQUE NOT NULL
       );
+
+      -- Add user_id to existing tables if they don't have it
+      ALTER TABLE records ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+      ALTER TABLE release_records ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
     `);
     console.log("Database tables ready.");
   } catch (err) {

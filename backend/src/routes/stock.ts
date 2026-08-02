@@ -1,15 +1,18 @@
 import { Router } from "express";
 import { pool } from "../db.js";
+import { authenticateToken, AuthRequest } from "../middleware/auth.js";
 
 export const stockRouter = Router();
 
 // ─── Stock Records ───────────────────────────────────────────────────────────
 
 // GET /api/stock/records
-stockRouter.get("/records", async (_req, res) => {
+stockRouter.get("/records", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     const result = await pool.query(
-      "SELECT * FROM records ORDER BY date DESC, created_at DESC"
+      "SELECT * FROM records WHERE user_id = $1 ORDER BY date DESC, created_at DESC",
+      [userId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -19,8 +22,9 @@ stockRouter.get("/records", async (_req, res) => {
 });
 
 // POST /api/stock/records
-stockRouter.post("/records", async (req, res) => {
+stockRouter.post("/records", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     const {
       date, food_item, unit, started_with, received,
       supplier_name, supplier_signature, provided,
@@ -29,12 +33,12 @@ stockRouter.post("/records", async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO records
-        (date, food_item, unit, started_with, received,
+        (user_id, date, food_item, unit, started_with, received,
          supplier_name, supplier_signature, provided,
          cook_name, cook_signature, destroyed, thrown_away, explanation)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING *`,
-      [date, food_item, unit, started_with, received,
+      [userId, date, food_item, unit, started_with, received,
        supplier_name, supplier_signature, provided,
        cook_name, cook_signature, destroyed, thrown_away, explanation]
     );
@@ -46,8 +50,9 @@ stockRouter.post("/records", async (req, res) => {
 });
 
 // PUT /api/stock/records/:id
-stockRouter.put("/records/:id", async (req, res) => {
+stockRouter.put("/records/:id", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     const { id } = req.params;
     const {
       date, food_item, unit, started_with, received,
@@ -60,12 +65,12 @@ stockRouter.put("/records/:id", async (req, res) => {
         date=$1, food_item=$2, unit=$3, started_with=$4, received=$5,
         supplier_name=$6, supplier_signature=$7, provided=$8,
         cook_name=$9, cook_signature=$10, destroyed=$11, thrown_away=$12, explanation=$13
-       WHERE id=$14 RETURNING *`,
+       WHERE id=$14 AND user_id=$15 RETURNING *`,
       [date, food_item, unit, started_with, received,
        supplier_name, supplier_signature, provided,
-       cook_name, cook_signature, destroyed, thrown_away, explanation, id]
+       cook_name, cook_signature, destroyed, thrown_away, explanation, id, userId]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+    if (result.rows.length === 0) return res.status(404).json({ error: "Not found or not authorized" });
     res.json(result.rows[0]);
   } catch (err) {
     console.error("PUT /api/stock/records/:id error:", err);
@@ -74,11 +79,12 @@ stockRouter.put("/records/:id", async (req, res) => {
 });
 
 // DELETE /api/stock/records/:id
-stockRouter.delete("/records/:id", async (req, res) => {
+stockRouter.delete("/records/:id", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM records WHERE id=$1 RETURNING id", [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+    const result = await pool.query("DELETE FROM records WHERE id=$1 AND user_id=$2 RETURNING id", [id, userId]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Not found or not authorized" });
     res.json({ deleted: result.rows[0].id });
   } catch (err) {
     console.error("DELETE /api/stock/records/:id error:", err);
@@ -90,8 +96,9 @@ stockRouter.delete("/records/:id", async (req, res) => {
 
 // GET /api/stock/combined-records
 // Returns rows from `records` PLUS `release_records` in a unified shape.
-stockRouter.get("/combined-records", async (_req, res) => {
+stockRouter.get("/combined-records", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     // Base stock records (add-stock, destroyed)
     const stockResult = await pool.query(
       `SELECT
@@ -99,7 +106,7 @@ stockRouter.get("/combined-records", async (_req, res) => {
          supplier_name, supplier_signature, provided,
          cook_name, cook_signature, destroyed, thrown_away, explanation,
          'stock' AS source, created_at
-       FROM records`
+       FROM records WHERE user_id = $1`, [userId]
     );
 
     // Release records – map columns to the unified shape
@@ -118,7 +125,7 @@ stockRouter.get("/combined-records", async (_req, res) => {
          0 AS thrown_away,
          COALESCE(notes, '') AS explanation,
          'release' AS source, created_at
-       FROM release_records`
+       FROM release_records WHERE user_id = $1`, [userId]
     );
 
     const combined = [...stockResult.rows, ...releaseResult.rows].sort(
@@ -139,10 +146,11 @@ stockRouter.get("/combined-records", async (_req, res) => {
 // ─── Release Records ──────────────────────────────────────────────────────────
 
 // GET /api/stock/releases
-stockRouter.get("/releases", async (_req, res) => {
+stockRouter.get("/releases", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     const result = await pool.query(
-      "SELECT * FROM release_records ORDER BY date DESC, created_at DESC"
+      "SELECT * FROM release_records WHERE user_id = $1 ORDER BY date DESC, created_at DESC", [userId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -152,8 +160,9 @@ stockRouter.get("/releases", async (_req, res) => {
 });
 
 // POST /api/stock/releases
-stockRouter.post("/releases", async (req, res) => {
+stockRouter.post("/releases", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     const {
       date, food_item, started_with, quantity,
       cook_name, students_fed, meal_type, notes, cook_signature, remaining,
@@ -161,11 +170,11 @@ stockRouter.post("/releases", async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO release_records
-        (date, food_item, started_with, quantity, cook_name,
+        (user_id, date, food_item, started_with, quantity, cook_name,
          students_fed, meal_type, notes, cook_signature, remaining)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [date, food_item, started_with, quantity, cook_name,
+      [userId, date, food_item, started_with, quantity, cook_name,
        students_fed, meal_type, notes, cook_signature, remaining ?? null]
     );
     res.status(201).json(result.rows[0]);
@@ -176,11 +185,12 @@ stockRouter.post("/releases", async (req, res) => {
 });
 
 // DELETE /api/stock/releases/:id
-stockRouter.delete("/releases/:id", async (req, res) => {
+stockRouter.delete("/releases/:id", authenticateToken, async (req: any, res) => {
   try {
+    const userId = req.user.id;
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM release_records WHERE id=$1 RETURNING id", [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+    const result = await pool.query("DELETE FROM release_records WHERE id=$1 AND user_id=$2 RETURNING id", [id, userId]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Not found or not authorized" });
     res.json({ deleted: result.rows[0].id });
   } catch (err) {
     console.error("DELETE /api/stock/releases/:id error:", err);

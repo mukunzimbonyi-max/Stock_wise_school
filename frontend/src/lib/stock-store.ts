@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_URL } from "./api";
+import { useAuthStore } from "@/store/auth";
+
+const getAuthHeaders = () => {
+  const token = useAuthStore.getState().token;
+  return token ? { "Authorization": `Bearer ${token}` } : {};
+};
 
 export type StockRecord = {
   id: string;
@@ -133,7 +139,9 @@ export function useStockRecords() {
 
   const fetchRecords = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/stock/combined-records`);
+      const res = await fetch(`${API_URL}/api/stock/combined-records`, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error(await res.text());
       const rows = await res.json();
       setRecords(rows.map(toStockRecord));
@@ -150,7 +158,7 @@ export function useStockRecords() {
   const add = useCallback(async (r: Omit<StockRecord, "id">) => {
     const res = await fetch(`${API_URL}/api/stock/records`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify(stockToBody(r)),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -164,7 +172,7 @@ export function useStockRecords() {
     const merged = { ...existing, ...r };
     const res = await fetch(`${API_URL}/api/stock/records/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify(stockToBody(merged)),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -173,7 +181,10 @@ export function useStockRecords() {
   }, [records]);
 
   const remove = useCallback(async (id: string) => {
-    const res = await fetch(`${API_URL}/api/stock/records/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API_URL}/api/stock/records/${id}`, { 
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error(await res.text());
     setRecords((p) => p.filter((x) => x.id !== id));
   }, []);
@@ -190,7 +201,9 @@ export function useReleases() {
 
   const fetchReleases = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/stock/releases`);
+      const res = await fetch(`${API_URL}/api/stock/releases`, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error(await res.text());
       const rows = await res.json();
       setReleases(rows.map(toReleaseRecord));
@@ -207,7 +220,7 @@ export function useReleases() {
   const add = useCallback(async (r: Omit<ReleaseRecord, "id">) => {
     const res = await fetch(`${API_URL}/api/stock/releases`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify(releaseToBody(r)),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -216,7 +229,10 @@ export function useReleases() {
   }, []);
 
   const remove = useCallback(async (id: string) => {
-    const res = await fetch(`${API_URL}/api/stock/releases/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API_URL}/api/stock/releases/${id}`, { 
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error(await res.text());
     setReleases((p) => p.filter((x) => x.id !== id));
   }, []);

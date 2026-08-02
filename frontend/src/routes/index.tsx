@@ -53,8 +53,15 @@ function Login() {
 
   useEffect(() => {
     fetch(`${API_URL}/api/stock/public-stats`)
-      .then((r) => r.json())
-      .then((data) => setStats(data))
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to fetch stats");
+        return r.json();
+      })
+      .then((data) => {
+        if (data && typeof data.foodItems === "number") {
+          setStats(data);
+        }
+      })
       .catch(() => {/* silently ignore – show 0s */});
   }, []);
   const scrollToLogin = () => {

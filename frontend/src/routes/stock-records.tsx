@@ -12,7 +12,7 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -158,7 +158,7 @@ function StockRecords() {
       remaining(r).toString(),
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head,
       body,
       startY: 20,

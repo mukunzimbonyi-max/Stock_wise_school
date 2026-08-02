@@ -120,11 +120,6 @@ function Login() {
     }
   };
 
-  const demoLogin = () => {
-    loginFn({ id: 999, name: "Demo User", email: "demo@school.rw" }, "demo-token");
-    toast.success("Demo mode", { description: "Viewing dashboard as Demo User." });
-    navigate({ to: "/dashboard" });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -337,9 +332,6 @@ function Login() {
                     <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
                       {isLoading ? "Logging in..." : "Login"}
                     </Button>
-                    <Button type="button" variant="outline" onClick={demoLogin} disabled={isLoading} className="h-11 w-full text-base font-semibold border-primary/20 hover:bg-primary/5">
-                      Use Demo Version
-                    </Button>
                   </div>
 
                   <p className="text-center text-sm">
@@ -451,9 +443,6 @@ function Login() {
                   <div className="flex flex-col gap-3">
                     <Button type="submit" disabled={isLoading} className="h-11 w-full text-base font-semibold">
                       {isLoading ? "Creating account..." : "Create Account"}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={demoLogin} disabled={isLoading} className="h-11 w-full text-base font-semibold border-primary/20 hover:bg-primary/5">
-                      Use Demo Version
                     </Button>
                   </div>
                   <p className="text-center text-sm">

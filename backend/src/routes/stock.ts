@@ -181,7 +181,7 @@ stockRouter.get("/food-items", async (_req, res) => {
   try {
     const result = await pool.query("SELECT name FROM food_items ORDER BY name");
     if (result.rows.length === 0) {
-      return res.json(["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar"]);
+      return res.json(["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar", "Vegetables"]);
     }
     res.json(result.rows.map((r: { name: string }) => r.name));
   } catch (err) {
@@ -218,7 +218,7 @@ stockRouter.get("/public-stats", async (_req, res) => {
     ]);
 
     res.json({
-      foodItems: parseInt(itemsResult.rows[0].count) || 0,
+      foodItems: Math.max(7, parseInt(itemsResult.rows[0].count) || 0),
       studentsFed: parseInt(releasesResult.rows[0].total_students) || 0,
       totalRecords: parseInt(recordsResult.rows[0].count) || 0,
     });

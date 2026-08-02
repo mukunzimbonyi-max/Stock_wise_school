@@ -40,7 +40,7 @@ export type SchoolInfo = {
   academicYear: string;
 };
 
-export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar"];
+export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar", "Vegetables"];
 export const NEW_ITEM_VALUE = "__new_item__";
 export const UNITS = ["Kg", "Litre", "Bag", "Carton"];
 

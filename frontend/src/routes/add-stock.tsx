@@ -306,25 +306,17 @@ function AddStock() {
               placeholder="Initials of supplier"
             />
           </div>
-        </Section>
-
-        {/* Explanation */}
-        <div className="card-surface p-5 sm:p-6">
-          <h2 className="text-base font-bold">Notes</h2>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Describe any losses, spoilage, or other notes about this stock entry
-          </p>
-          <div className="space-y-1.5">
-            <Label htmlFor="explanation">Notes (Optional)</Label>
+          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+            <Label>Notes</Label>
             <Textarea
-              id="explanation"
               value={form.explanation}
               onChange={(e) => set("explanation", e.target.value)}
-              placeholder="e.g. 6 kg destroyed due to weevils, 1 L spilled during transfer…"
-              rows={3}
+              placeholder="Optional notes"
+              className="resize-none"
+              rows={2}
             />
           </div>
-        </div>
+        </Section>
 
         <div className="card-surface flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">

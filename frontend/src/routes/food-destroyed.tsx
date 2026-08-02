@@ -22,7 +22,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useStockRecords, useFoodItems, useReleases, byFoodItem, UNITS } from "@/lib/stock-store";
+import {
+  NEW_ITEM_VALUE,
+  useStockRecords,
+  useFoodItems,
+  useReleases,
+  byFoodItem,
+  UNITS,
+} from "@/lib/stock-store";
 
 export const Route = createFileRoute("/food-destroyed")({
   head: () => ({
@@ -44,7 +51,7 @@ export const Route = createFileRoute("/food-destroyed")({
 
 function FoodDestroyed() {
   const { records, add } = useStockRecords();
-  const { foodItems } = useFoodItems();
+  const { foodItems, addFoodItem } = useFoodItems();
   const { releases } = useReleases();
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -57,14 +64,26 @@ function FoodDestroyed() {
     thrownAway: 0,
     explanation: "",
   });
+  const [customMode, setCustomMode] = useState(false);
+  const [customItem, setCustomItem] = useState("");
+
+  const effectiveItem = customMode && customItem.trim() ? customItem.trim() : form.foodItem;
 
   useEffect(() => {
-    const currentStock = byFoodItem(records, releases).find((r) => r.item === form.foodItem)?.remaining || 0;
-    setForm((f) => ({ ...f, startedWith: currentStock }));
-  }, [form.foodItem, records, releases]);
+    if (!customMode) {
+      const currentStock = byFoodItem(records, releases).find((r) => r.item === form.foodItem)?.remaining || 0;
+      setForm((f) => ({ ...f, startedWith: currentStock }));
+    } else {
+      setForm((f) => ({ ...f, startedWith: 0 }));
+    }
+  }, [form.foodItem, records, releases, customMode]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (customMode && !customItem.trim()) {
+      toast.error("Enter the name of the new item");
+      return;
+    }
     if (form.destroyed <= 0 && form.thrownAway <= 0) {
       toast.error("Please enter a destroyed or thrown away quantity");
       return;
@@ -74,8 +93,13 @@ function FoodDestroyed() {
       return;
     }
 
+    if (customMode && customItem.trim()) {
+      addFoodItem(customItem.trim());
+    }
+
     add({
       ...form,
+      foodItem: effectiveItem,
       received: 0,
       supplierName: "N/A",
       supplierSignature: "",
@@ -85,9 +109,11 @@ function FoodDestroyed() {
     });
 
     toast.success("Record added", {
-      description: `Recorded ${form.destroyed + form.thrownAway} ${form.unit} lost for ${form.foodItem}`,
+      description: `Recorded ${form.destroyed + form.thrownAway} ${form.unit} lost for ${effectiveItem}`,
     });
     setIsOpen(false);
+    setCustomMode(false);
+    setCustomItem("");
     setForm({ ...form, destroyed: 0, thrownAway: 0, explanation: "" });
   };
 
@@ -191,8 +217,15 @@ function FoodDestroyed() {
                 <div className="space-y-1.5">
                   <Label>Food Item</Label>
                   <Select
-                    value={form.foodItem}
-                    onValueChange={(v) => setForm({ ...form, foodItem: v })}
+                    value={customMode ? NEW_ITEM_VALUE : form.foodItem}
+                    onValueChange={(v) => {
+                      if (v === NEW_ITEM_VALUE) {
+                        setCustomMode(true);
+                      } else {
+                        setCustomMode(false);
+                        setForm({ ...form, foodItem: v });
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -203,8 +236,18 @@ function FoodDestroyed() {
                           {f}
                         </SelectItem>
                       ))}
+                      <SelectItem value={NEW_ITEM_VALUE}>Other / New item…</SelectItem>
                     </SelectContent>
                   </Select>
+                  {customMode && (
+                    <Input
+                      value={customItem}
+                      onChange={(e) => setCustomItem(e.target.value)}
+                      placeholder="Enter new item name"
+                      autoFocus
+                      className="mt-2"
+                    />
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">

@@ -23,7 +23,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useFoodItems, useReleases, type ReleaseRecord, useStockRecords, byFoodItem } from "@/lib/stock-store";
+import {
+  NEW_ITEM_VALUE,
+  useFoodItems,
+  useReleases,
+  type ReleaseRecord,
+  useStockRecords,
+  byFoodItem,
+} from "@/lib/stock-store";
 
 export const Route = createFileRoute("/food-released")({
   head: () => ({
@@ -48,7 +55,7 @@ const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
 function FoodReleased() {
   const { releases, add, remove } = useReleases();
-  const { foodItems } = useFoodItems();
+  const { foodItems, addFoodItem } = useFoodItems();
   const { records } = useStockRecords();
   const [search, setSearch] = useState("");
   const [deleting, setDeleting] = useState<ReleaseRecord | null>(null);
@@ -63,11 +70,19 @@ function FoodReleased() {
     notes: "",
     cookSignature: "",
   });
+  const [customMode, setCustomMode] = useState(false);
+  const [customItem, setCustomItem] = useState("");
+
+  const effectiveItem = customMode && customItem.trim() ? customItem.trim() : form.foodItem;
 
   useEffect(() => {
-    const currentStock = byFoodItem(records, releases).find((r) => r.item === form.foodItem)?.remaining || 0;
-    setForm((f) => ({ ...f, startedWith: currentStock }));
-  }, [form.foodItem, records, releases]);
+    if (!customMode) {
+      const currentStock = byFoodItem(records, releases).find((r) => r.item === form.foodItem)?.remaining || 0;
+      setForm((f) => ({ ...f, startedWith: currentStock }));
+    } else {
+      setForm((f) => ({ ...f, startedWith: 0 }));
+    }
+  }, [form.foodItem, records, releases, customMode]);
 
   const rows = releases.filter((r) =>
     `${r.foodItem} ${r.cookName} ${r.mealType}`.toLowerCase().includes(search.toLowerCase()),
@@ -86,17 +101,26 @@ function FoodReleased() {
       toast.error("Quantity released must be greater than zero");
       return;
     }
-    
+    if (customMode && !customItem.trim()) {
+      toast.error("Enter the name of the new item");
+      return;
+    }
     const remainingStock = form.startedWith - form.quantity;
     if (remainingStock < 0) {
       toast.error(`Cannot release ${form.quantity}. Only ${form.startedWith} in stock.`);
       return;
     }
 
-    add({ ...form, remaining: remainingStock });
+    if (customMode && customItem.trim()) {
+      addFoodItem(customItem.trim());
+    }
+
+    add({ ...form, foodItem: effectiveItem, remaining: remainingStock });
     toast.success("Food release recorded", {
-      description: `${form.quantity} of ${form.foodItem} for ${form.studentsFed} students`,
+      description: `${form.quantity} of ${effectiveItem} for ${form.studentsFed} students`,
     });
+    setCustomMode(false);
+    setCustomItem("");
     setForm({ ...form, quantity: 0, studentsFed: 0, notes: "", cookSignature: "" });
   };
 
@@ -142,8 +166,15 @@ function FoodReleased() {
             <div className="space-y-1.5">
               <Label>Food Item</Label>
               <Select
-                value={form.foodItem}
-                onValueChange={(v) => setForm({ ...form, foodItem: v })}
+                value={customMode ? NEW_ITEM_VALUE : form.foodItem}
+                onValueChange={(v) => {
+                  if (v === NEW_ITEM_VALUE) {
+                    setCustomMode(true);
+                  } else {
+                    setCustomMode(false);
+                    setForm({ ...form, foodItem: v });
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -154,8 +185,18 @@ function FoodReleased() {
                       {f}
                     </SelectItem>
                   ))}
+                  <SelectItem value={NEW_ITEM_VALUE}>Other / New item…</SelectItem>
                 </SelectContent>
               </Select>
+              {customMode && (
+                <Input
+                  value={customItem}
+                  onChange={(e) => setCustomItem(e.target.value)}
+                  placeholder="Enter new item name"
+                  autoFocus
+                  className="mt-2"
+                />
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Started With</Label>

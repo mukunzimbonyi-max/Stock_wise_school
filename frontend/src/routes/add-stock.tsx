@@ -287,7 +287,7 @@ function AddStock() {
             Describe any losses, spoilage, or other notes about this stock entry
           </p>
           <div className="space-y-1.5">
-            <Label htmlFor="explanation">Explanation</Label>
+            <Label htmlFor="explanation">Explanation (Optional)</Label>
             <Textarea
               id="explanation"
               value={form.explanation}

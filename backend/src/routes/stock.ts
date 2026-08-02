@@ -205,3 +205,25 @@ stockRouter.post("/food-items", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// ─── Public Stats (no auth required) ─────────────────────────────────────────
+
+// GET /api/stock/public-stats
+stockRouter.get("/public-stats", async (_req, res) => {
+  try {
+    const [itemsResult, releasesResult, recordsResult] = await Promise.all([
+      pool.query("SELECT COUNT(*) FROM food_items"),
+      pool.query("SELECT COALESCE(SUM(students_fed), 0) AS total_students FROM releases"),
+      pool.query("SELECT COUNT(*) FROM records"),
+    ]);
+
+    res.json({
+      foodItems: parseInt(itemsResult.rows[0].count) || 0,
+      studentsFed: parseInt(releasesResult.rows[0].total_students) || 0,
+      totalRecords: parseInt(recordsResult.rows[0].count) || 0,
+    });
+  } catch (err) {
+    console.error("GET /api/stock/public-stats error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});

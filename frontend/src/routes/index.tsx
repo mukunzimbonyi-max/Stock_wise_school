@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Lock, Mail, PhoneCall, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,15 @@ function Login() {
     password?: string;
     confirmPassword?: string;
   }>({});
+
+  const [stats, setStats] = useState({ foodItems: 0, studentsFed: 0, totalRecords: 0 });
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/stock/public-stats`)
+      .then((r) => r.json())
+      .then((data) => setStats(data))
+      .catch(() => {/* silently ignore – show 0s */});
+  }, []);
   const scrollToLogin = () => {
     document.getElementById("signin")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -176,9 +185,9 @@ function Login() {
             </p>
             <div className="mt-8 grid max-w-md grid-cols-3 gap-4">
               {[
-                { k: "6", v: "Food items" },
-                { k: "480", v: "Students fed" },
-                { k: "100%", v: "Traceable" },
+                { k: stats.foodItems.toString(), v: "Food items" },
+                { k: stats.studentsFed.toLocaleString(), v: "Students fed" },
+                { k: stats.totalRecords.toString(), v: "Stock records" },
               ].map((s) => (
                 <div key={s.v} className="rounded-xl bg-primary-foreground/10 p-4">
                   <p className="text-2xl font-bold">{s.k}</p>

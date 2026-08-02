@@ -289,12 +289,12 @@ function AddStock() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">
-                Started with + Received
+                Available Stock Quantity
               </p>
               <p
                 className={`text-2xl font-bold ${remainingQty < 0 ? "text-destructive" : "text-primary"}`}
               >
-                {remainingQty} {form.unit} remaining
+                {remainingQty} {form.unit} available
               </p>
             </div>
           </div>

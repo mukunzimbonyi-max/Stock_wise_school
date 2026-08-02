@@ -69,6 +69,7 @@ function StockRecords() {
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("date-desc");
   const [page, setPage] = useState(1);
+  const [viewing, setViewing] = useState<StockRecord | null>(null);
   const [editing, setEditing] = useState<StockRecord | null>(null);
   const [editCustomMode, setEditCustomMode] = useState(false);
   const [editCustomItem, setEditCustomItem] = useState("");

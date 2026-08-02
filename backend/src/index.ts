@@ -17,7 +17,7 @@ async function initDB() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS stock_records (
+      CREATE TABLE IF NOT EXISTS records (
         id SERIAL PRIMARY KEY,
         date DATE NOT NULL,
         food_item VARCHAR(255) NOT NULL,

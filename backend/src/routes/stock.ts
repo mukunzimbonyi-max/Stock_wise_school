@@ -9,7 +9,7 @@ export const stockRouter = Router();
 stockRouter.get("/records", async (_req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM stock_records ORDER BY date DESC, created_at DESC"
+      "SELECT * FROM records ORDER BY date DESC, created_at DESC"
     );
     res.json(result.rows);
   } catch (err) {
@@ -28,7 +28,7 @@ stockRouter.post("/records", async (req, res) => {
     } = req.body;
 
     const result = await pool.query(
-      `INSERT INTO stock_records
+      `INSERT INTO records
         (date, food_item, unit, started_with, received,
          supplier_name, supplier_signature, provided,
          cook_name, cook_signature, destroyed, thrown_away, explanation)
@@ -56,7 +56,7 @@ stockRouter.put("/records/:id", async (req, res) => {
     } = req.body;
 
     const result = await pool.query(
-      `UPDATE stock_records SET
+      `UPDATE records SET
         date=$1, food_item=$2, unit=$3, started_with=$4, received=$5,
         supplier_name=$6, supplier_signature=$7, provided=$8,
         cook_name=$9, cook_signature=$10, destroyed=$11, thrown_away=$12, explanation=$13
@@ -77,7 +77,7 @@ stockRouter.put("/records/:id", async (req, res) => {
 stockRouter.delete("/records/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM stock_records WHERE id=$1 RETURNING id", [id]);
+    const result = await pool.query("DELETE FROM records WHERE id=$1 RETURNING id", [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
     res.json({ deleted: result.rows[0].id });
   } catch (err) {

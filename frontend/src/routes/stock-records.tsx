@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,6 +138,38 @@ function StockRecords() {
     toast.success("Excel (CSV) export downloaded");
   };
 
+  const exportPdf = () => {
+    const doc = new jsPDF();
+    doc.text("Stock Records - School Food Stock Management", 14, 15);
+
+    const head = [[
+      "Date",
+      "Food Item",
+      "Started With",
+      "Received",
+      "Supplier",
+      "Remaining",
+    ]];
+    const body = filtered.map((r) => [
+      r.date,
+      r.foodItem,
+      r.startedWith.toString(),
+      r.received.toString(),
+      r.supplierName || "",
+      remaining(r).toString(),
+    ]);
+
+    autoTable(doc, {
+      head,
+      body,
+      startY: 20,
+      theme: "grid",
+    });
+
+    doc.save("stock-records.pdf");
+    toast.success("PDF export downloaded");
+  };
+
   const print = () => {
     toast.info("Preparing print view...");
     setTimeout(() => window.print(), 200);
@@ -240,7 +274,7 @@ function StockRecords() {
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Stock Record
               </Link>
             </Button>
-            <Button variant="outline" onClick={() => toast.success("PDF export generated")}>
+            <Button variant="outline" onClick={exportPdf}>
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
             <Button variant="outline" onClick={exportCsv}>

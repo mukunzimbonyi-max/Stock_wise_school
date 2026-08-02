@@ -50,7 +50,7 @@ export function useUnits(records: StockRecord[] = []) {
 }
 
 export const totalUsed = (r: StockRecord) => r.provided + r.destroyed + r.thrownAway;
-export const remaining = (r: StockRecord) => r.startedWith + r.received - totalUsed(r);
+export const remaining = (r: StockRecord) => Math.max(0, r.startedWith + r.received - totalUsed(r));
 export const LOW_STOCK_THRESHOLD = 40;
 
 // ─── Snake ↔ Camel conversion ─────────────────────────────────────────────────
@@ -343,8 +343,10 @@ export function byFoodItem(records: StockRecord[], releases: ReleaseRecord[] = [
         const r = event as ReleaseRecord & { type: string };
         currentStock -= r.quantity;
       }
+      // Never let stock go below zero
+      currentStock = Math.max(0, currentStock);
     }
 
-    return { item, received, released, remaining: currentStock };
+    return { item, received, released, remaining: Math.max(0, currentStock) };
   }).filter((r) => r.received || r.released || r.remaining);
 }

@@ -98,7 +98,7 @@ function AddStock() {
   const num = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement>) =>
     set(k, Number(e.target.value) || 0);
 
-  const remainingQty = form.startedWith + form.received;
+  const remainingQty = Math.max(0, form.startedWith + form.received);
 
   const effectiveItem = customMode && customItem.trim() ? customItem.trim() : form.foodItem;
   const effectiveUnit = customUnitMode && customUnit.trim() ? customUnit.trim() : form.unit;

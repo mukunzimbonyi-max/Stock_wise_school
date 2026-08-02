@@ -9,6 +9,8 @@ export const app = express();
 
 const allowedOrigins = [
   process.env.FRONTEND_URL ?? "https://stock-wise-school.vercel.app",
+  "https://stock-wise-school.vercel.app",
+  "https://stock-wise-school.lovable.app",
   "http://localhost:5173",
   "http://localhost:4173",
 ];

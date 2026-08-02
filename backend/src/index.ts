@@ -3,7 +3,7 @@ import "dotenv/config";
 import { app } from "./app.js";
 import { pool } from "./db.js";
 
-const port = Number(process.env.PORT ?? 4000);
+const port = Number(process.env.PORT ?? 5000);
 
 // Auto-create tables if they don't exist (runs on every startup)
 async function initDB() {

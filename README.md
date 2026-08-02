@@ -23,9 +23,9 @@ This is an **npm workspaces monorepo** split into two packages:
 
 ### backend
 
-- Express + TypeScript skeleton, ready for REST endpoints
-- Placeholder `GET /api/stock` + `GET /api/health` routes in `backend/src`
-- Run with `npm run dev:backend` (tsx watch, port 4000)
+- Express + TypeScript API, deployed on Render
+- Routes in `backend/src`: `GET /api/health`, `POST /api/auth/login`, `POST /api/auth/register`
+- Runs on port 5000 (`npm run dev:backend`)
 
 ## Getting started
 
@@ -34,13 +34,16 @@ You need Node.js and npm.
 ```sh
 npm i
 npm run dev:frontend   # UI at http://127.0.0.1:5173
-npm run dev:backend    # API at http://127.0.0.1:4000
+npm run dev:backend    # API at http://127.0.0.1:5000
 ```
 
 Or just `npm run dev` to start the frontend.
 
-The frontend dev server proxies `/api` requests to the backend (port 4000),
+The frontend dev server proxies `/api` requests to the backend (port 5000),
 so pages can call the API with relative URLs once you implement endpoints.
+
+In production the frontend calls the backend at
+`https://stock-wise-school.onrender.com` (override with `VITE_API_URL`).
 
 ## Scripts (run from the root)
 

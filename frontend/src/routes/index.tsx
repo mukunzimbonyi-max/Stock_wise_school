@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { API_URL } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 
 export const Route = createFileRoute("/")({
@@ -61,7 +62,7 @@ function Login() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/auth/login`, {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -96,7 +97,7 @@ function Login() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/auth/register`, {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), email, password }),

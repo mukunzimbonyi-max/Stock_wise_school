@@ -16,6 +16,7 @@ export type StockRecord = {
   destroyed: number;
   thrownAway: number;
   explanation: string;
+  source?: "stock" | "release" | "destroyed";
 };
 
 export type ReleaseRecord = {
@@ -58,18 +59,19 @@ function toStockRecord(row: Record<string, unknown>): StockRecord {
   return {
     id: String(row.id),
     date: String(row.date).slice(0, 10),
-    foodItem: String(row.food_item),
-    unit: String(row.unit),
-    startedWith: Number(row.started_with),
-    received: Number(row.received),
+    foodItem: String(row.food_item ?? row.foodItem ?? ""),
+    unit: String(row.unit ?? ""),
+    startedWith: Number(row.started_with ?? 0),
+    received: Number(row.received ?? 0),
     supplierName: String(row.supplier_name ?? ""),
     supplierSignature: String(row.supplier_signature ?? ""),
-    provided: Number(row.provided),
+    provided: Number(row.provided ?? 0),
     cookName: String(row.cook_name ?? ""),
     cookSignature: String(row.cook_signature ?? ""),
-    destroyed: Number(row.destroyed),
-    thrownAway: Number(row.thrown_away),
+    destroyed: Number(row.destroyed ?? 0),
+    thrownAway: Number(row.thrown_away ?? 0),
     explanation: String(row.explanation ?? ""),
+    source: (row.source as "stock" | "release" | undefined) ?? "stock",
   };
 }
 
@@ -131,7 +133,7 @@ export function useStockRecords() {
 
   const fetchRecords = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/stock/records`);
+      const res = await fetch(`${API_URL}/api/stock/combined-records`);
       if (!res.ok) throw new Error(await res.text());
       const rows = await res.json();
       setRecords(rows.map(toStockRecord));

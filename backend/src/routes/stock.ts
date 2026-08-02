@@ -86,6 +86,56 @@ stockRouter.delete("/records/:id", async (req, res) => {
   }
 });
 
+// ─── Combined Records (all sources merged) ────────────────────────────────────
+
+// GET /api/stock/combined-records
+// Returns rows from `records` PLUS `release_records` in a unified shape.
+stockRouter.get("/combined-records", async (_req, res) => {
+  try {
+    // Base stock records (add-stock, destroyed)
+    const stockResult = await pool.query(
+      `SELECT
+         id::text, date, food_item, unit, started_with, received,
+         supplier_name, supplier_signature, provided,
+         cook_name, cook_signature, destroyed, thrown_away, explanation,
+         'stock' AS source, created_at
+       FROM records`
+    );
+
+    // Release records – map columns to the unified shape
+    const releaseResult = await pool.query(
+      `SELECT
+         id::text, date, food_item,
+         '' AS unit,
+         started_with,
+         0 AS received,
+         '' AS supplier_name,
+         '' AS supplier_signature,
+         quantity AS provided,
+         cook_name,
+         cook_signature,
+         0 AS destroyed,
+         0 AS thrown_away,
+         COALESCE(notes, '') AS explanation,
+         'release' AS source, created_at
+       FROM release_records`
+    );
+
+    const combined = [...stockResult.rows, ...releaseResult.rows].sort(
+      (a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    );
+
+    res.json(combined);
+  } catch (err) {
+    console.error("GET /api/stock/combined-records error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // ─── Release Records ──────────────────────────────────────────────────────────
 
 // GET /api/stock/releases

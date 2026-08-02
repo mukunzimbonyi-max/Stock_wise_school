@@ -361,27 +361,45 @@ function StockRecords() {
                 {rows.map((r) => {
                   const rem = remaining(r);
                   const destroyedTotal = Number(r.destroyed || 0) + Number(r.thrownAway || 0);
+                  const isRelease = r.source === "release";
+                  const isDestroyed = (r.destroyed || 0) > 0 || (r.thrownAway || 0) > 0;
+                  const rowBg = isRelease
+                    ? "bg-blue-50/40 dark:bg-blue-950/20"
+                    : isDestroyed
+                    ? "bg-red-50/30 dark:bg-red-950/20"
+                    : "";
                   
                   return (
                     <tr
-                      key={r.id}
-                      className="border-t border-border/70 transition-colors hover:bg-muted/40 even:bg-muted/20"
+                      key={`${r.source}-${r.id}`}
+                      className={`border-t border-border/70 transition-colors hover:bg-muted/40 even:bg-muted/10 ${rowBg}`}
                     >
-                      <td className="border border-border/70 whitespace-nowrap px-3 py-2">{r.date}</td>
-                      <td className="border border-border/70 px-3 py-2 font-medium">{r.startedWith}</td>
-                      <td className="border border-border/70 px-3 py-2">{r.received}</td>
-                      <td className="border border-border/70 whitespace-nowrap px-3 py-2 text-muted-foreground">{r.supplierName}</td>
+                      <td className="border border-border/70 whitespace-nowrap px-3 py-2">
+                        <div className="text-xs">{r.date}</div>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-0.5 inline-block ${
+                          isRelease
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                            : isDestroyed
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                            : "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                        }`}>
+                          {isRelease ? "Released" : isDestroyed ? "Destroyed" : "Stock"}
+                        </span>
+                      </td>
+                      <td className="border border-border/70 px-3 py-2 font-medium">{r.startedWith || "—"}</td>
+                      <td className="border border-border/70 px-3 py-2">{r.received || "—"}</td>
+                      <td className="border border-border/70 whitespace-nowrap px-3 py-2 text-muted-foreground">{r.supplierName || "—"}</td>
                       <td className="border border-border/70 whitespace-nowrap px-3 py-2 italic text-muted-foreground">
-                        {r.supplierSignature}
+                        {r.supplierSignature || "—"}
                       </td>
                       
                       <td className="border border-border/70 px-3 py-2 font-medium text-foreground">{r.provided || 0}</td>
-                      <td className="border border-border/70 px-3 py-2 text-muted-foreground">{r.cookName}</td>
-                      <td className="border border-border/70 px-3 py-2 italic text-muted-foreground">{r.cookSignature}</td>
+                      <td className="border border-border/70 px-3 py-2 text-muted-foreground">{r.cookName || "—"}</td>
+                      <td className="border border-border/70 px-3 py-2 italic text-muted-foreground">{r.cookSignature || "—"}</td>
                       
                       <td className="border border-border/70 px-3 py-2">{r.destroyed || 0}</td>
                       <td className="border border-border/70 px-3 py-2">{r.thrownAway || 0}</td>
-                      <td className="border border-border/70 px-3 py-2 font-semibold bg-muted/30">{destroyedTotal}</td>
+                      <td className="border border-border/70 px-3 py-2 font-semibold bg-muted/30">{destroyedTotal || 0}</td>
 
                       <td className="border border-border/70 px-3 py-2 text-center bg-muted/10 font-bold">
                         <span className={rem < LOW_STOCK_THRESHOLD ? "text-warning" : "text-success"}>
@@ -390,7 +408,7 @@ function StockRecords() {
                       </td>
                       
                       <td className="border border-border/70 max-w-[200px] truncate px-3 py-2 text-muted-foreground">
-                        {r.explanation}
+                        {r.explanation || "—"}
                       </td>
                       
                       <td className="border border-border/70 whitespace-nowrap px-3 py-1">
@@ -404,24 +422,29 @@ function StockRecords() {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7"
-                            aria-label="Edit"
-                            onClick={() => setEditing({ ...r })}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            aria-label="Delete"
-                            onClick={() => setDeleting(r)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {/* Only allow edit/delete on stock-source rows */}
+                          {r.source !== "release" && (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                aria-label="Edit"
+                                onClick={() => setEditing({ ...r })}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                aria-label="Delete"
+                                onClick={() => setDeleting(r)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

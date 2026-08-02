@@ -43,6 +43,12 @@ export type SchoolInfo = {
 export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar"];
 export const NEW_ITEM_VALUE = "__new_item__";
 export const UNITS = ["Kg", "Litre", "Bag", "Carton"];
+
+export function useUnits() {
+  const { records } = useStockRecords();
+  return Array.from(new Set([...UNITS, ...records.map((r) => r.unit)])).sort();
+}
+
 export const totalUsed = (r: StockRecord) => r.provided + r.destroyed + r.thrownAway;
 export const remaining = (r: StockRecord) => r.startedWith + r.received - totalUsed(r);
 export const LOW_STOCK_THRESHOLD = 40;

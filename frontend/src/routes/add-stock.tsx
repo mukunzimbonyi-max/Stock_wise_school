@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/select";
 import {
   NEW_ITEM_VALUE,
-  UNITS,
   useFoodItems,
   useSchoolInfo,
   useStockRecords,
   byFoodItem,
   useReleases,
+  useUnits,
 } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/add-stock")({
@@ -82,12 +82,15 @@ function AddStock() {
   const { releases } = useReleases();
   const { school, setSchool } = useSchoolInfo();
   const { foodItems, addFoodItem } = useFoodItems();
+  const units = useUnits();
   const navigate = useNavigate();
   const [form, setForm] = useState(empty);
   const [customMode, setCustomMode] = useState(false);
   const [customItem, setCustomItem] = useState("");
+  const [customUnitMode, setCustomUnitMode] = useState(false);
+  const [customUnit, setCustomUnit] = useState("");
   type Errors = Partial<
-    Record<"date" | "supplierName" | "cookName" | "received" | "explanation" | "customItem", string>
+    Record<"date" | "supplierName" | "cookName" | "received" | "explanation" | "customItem" | "customUnit", string>
   >;
   const [errors, setErrors] = useState<Errors>({});
 
@@ -98,6 +101,7 @@ function AddStock() {
   const remainingQty = form.startedWith + form.received;
 
   const effectiveItem = customMode && customItem.trim() ? customItem.trim() : form.foodItem;
+  const effectiveUnit = customUnitMode && customUnit.trim() ? customUnit.trim() : form.unit;
 
   useEffect(() => {
     if (!customMode) {
@@ -114,6 +118,7 @@ function AddStock() {
     if (!form.supplierName.trim()) next.supplierName = "Supplier name is required";
     if (form.startedWith < 0 || form.received < 0) next.received = "Quantities cannot be negative";
     if (customMode && !customItem.trim()) next.customItem = "Enter the name of the new item";
+    if (customUnitMode && !customUnit.trim()) next.customUnit = "Enter the name of the new unit";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -124,14 +129,16 @@ function AddStock() {
       return;
     }
     if (customMode && customItem.trim()) addFoodItem(customItem.trim());
-    add({ ...form, foodItem: effectiveItem });
+    add({ ...form, foodItem: effectiveItem, unit: effectiveUnit });
     toast.success("Stock record saved", {
-      description: `${effectiveItem} · remaining ${remainingQty} ${form.unit}`,
+      description: `${effectiveItem} · remaining ${remainingQty} ${effectiveUnit}`,
     });
     if (again) {
       setForm({ ...empty, date: form.date, supplierName: form.supplierName });
       setCustomMode(false);
       setCustomItem("");
+      setCustomUnitMode(false);
+      setCustomUnit("");
       setErrors({});
     } else {
       navigate({ to: "/stock-records" });
@@ -237,18 +244,39 @@ function AddStock() {
           </div>
           <div className="space-y-1.5">
             <Label>Unit of Measurement</Label>
-            <Select value={form.unit} onValueChange={(v) => set("unit", v)}>
+            <Select 
+              value={customUnitMode ? NEW_ITEM_VALUE : form.unit} 
+              onValueChange={(v) => {
+                if (v === NEW_ITEM_VALUE) {
+                  setCustomUnitMode(true);
+                } else {
+                  setCustomUnitMode(false);
+                  set("unit", v);
+                }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {UNITS.map((u) => (
+                {units.map((u) => (
                   <SelectItem key={u} value={u}>
                     {u}
                   </SelectItem>
                 ))}
+                <SelectItem value={NEW_ITEM_VALUE}>Other / New unit…</SelectItem>
               </SelectContent>
             </Select>
+            {customUnitMode && (
+              <Input
+                value={customUnit}
+                onChange={(e) => setCustomUnit(e.target.value)}
+                placeholder="Enter new unit (e.g., Box)"
+                autoFocus
+                className="mt-2"
+              />
+            )}
+            {errors.customUnit && <p className="text-xs text-destructive">{errors.customUnit}</p>}
           </div>
           <div className="space-y-1.5">
             <Label>Started With Quantity</Label>
@@ -282,12 +310,12 @@ function AddStock() {
 
         {/* Explanation */}
         <div className="card-surface p-5 sm:p-6">
-          <h2 className="text-base font-bold">Explanation / Remarks</h2>
+          <h2 className="text-base font-bold">Notes</h2>
           <p className="mb-4 text-xs text-muted-foreground">
             Describe any losses, spoilage, or other notes about this stock entry
           </p>
           <div className="space-y-1.5">
-            <Label htmlFor="explanation">Explanation (Optional)</Label>
+            <Label htmlFor="explanation">Notes (Optional)</Label>
             <Textarea
               id="explanation"
               value={form.explanation}

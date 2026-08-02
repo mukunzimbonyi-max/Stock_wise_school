@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import * as XLSX from "xlsx";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,7 +108,7 @@ function StockRecords() {
   const current = Math.min(page, pages);
   const rows = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const exportCsv = () => {
+  const exportExcel = () => {
     const header = [
       "Date",
       "Food Item",
@@ -126,16 +127,14 @@ function StockRecords() {
       r.supplierName,
       r.supplierSignature,
       remaining(r),
-      `"${r.explanation.replace(/"/g, "'")}"`,
+      r.explanation,
     ]);
-    const csv = [header, ...body].map((r) => r.join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "stock-records.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Excel (CSV) export downloaded");
+    
+    const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Stock Records");
+    XLSX.writeFile(wb, "stock-records.xlsx");
+    toast.success("Excel (.xlsx) export downloaded");
   };
 
   const exportPdf = () => {
@@ -277,7 +276,7 @@ function StockRecords() {
             <Button variant="outline" onClick={exportPdf}>
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
-            <Button variant="outline" onClick={exportCsv}>
+            <Button variant="outline" onClick={exportExcel}>
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Export Excel
             </Button>
             <Button variant="outline" onClick={print}>

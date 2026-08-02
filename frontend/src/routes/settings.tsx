@@ -15,6 +15,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useReleases, useSchoolInfo, useStockRecords } from "@/lib/stock-store";
+import { useAuthStore } from "@/store/auth";
+import { useTranslation, useI18n } from "@/store/i18n";
+import { API_URL } from "@/lib/api";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -24,11 +27,6 @@ export const Route = createFileRoute("/settings")({
         name: "description",
         content:
           "Manage your profile, password, notifications, theme, language and stock data backups.",
-      },
-      { property: "og:title", content: "Settings — School Food Stock Management" },
-      {
-        property: "og:description",
-        content: "Personalise the school food stock system and back up your records.",
       },
     ],
   }),
@@ -66,15 +64,32 @@ function SettingsPage() {
   const { records, setRecords } = useStockRecords();
   const { releases } = useReleases();
   const { school } = useSchoolInfo();
+  
+  // Auth Store
+  const { user, updateUser } = useAuthStore();
+  
+  // I18n
+  const { t, lang } = useTranslation();
+  const setLanguage = useI18n((s) => s.setLanguage);
+
   const [dark, setDark] = useState(false);
+  
   const [profile, setProfile] = useState({
-    name: "Aline Niyonkuru",
-    email: "stockmanager@gshuye.rw",
-    role: "Stock Manager",
+    name: user?.name || "",
+    email: user?.email || "",
+    role: "Stock Manager", // Static for now, as role isn't in db yet
   });
+  
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
-  const [notif, setNotif] = useState({ lowStock: true, delivery: true, weekly: false });
-  const [language, setLanguage] = useState("English");
+  
+  // Persisted notifications
+  const [notif, setNotif] = useState(() => {
+    const saved = localStorage.getItem("sfsms.notif");
+    return saved ? JSON.parse(saved) : { lowStock: true, delivery: true, weekly: false };
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPwd, setIsChangingPwd] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("sfsms.theme") === "dark";
@@ -87,6 +102,61 @@ function SettingsPage() {
     document.documentElement.classList.toggle("dark", v);
     localStorage.setItem("sfsms.theme", v ? "dark" : "light");
     toast.success(`${v ? "Dark" : "Light"} mode enabled`);
+  };
+
+  const handleNotifChange = (key: string, v: boolean) => {
+    const updated = { ...notif, [key]: v };
+    setNotif(updated);
+    localStorage.setItem("sfsms.notif", JSON.stringify(updated));
+    toast.success(`${v ? "Enabled" : "Disabled"} notification`);
+  };
+
+  const saveProfile = async () => {
+    if (!user) return toast.error("Not logged in");
+    if (!profile.name || !profile.email) return toast.error("Name and email are required");
+    
+    setIsSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user.id, name: profile.name, email: profile.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update profile");
+      
+      updateUser(data.user);
+      toast.success("Profile saved successfully");
+    } catch (err: any) {
+      toast.error("Failed to save profile", { description: err.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (!user) return toast.error("Not logged in");
+    if (!pwd.current) return toast.error("Current password is required");
+    if (pwd.next.length < 6) return toast.error("New password must be at least 6 characters");
+    if (pwd.next !== pwd.confirm) return toast.error("Passwords do not match");
+
+    setIsChangingPwd(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user.id, currentPassword: pwd.current, newPassword: pwd.next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to change password");
+
+      setPwd({ current: "", next: "", confirm: "" });
+      toast.success("Password changed successfully");
+    } catch (err: any) {
+      toast.error("Failed to change password", { description: err.message });
+    } finally {
+      setIsChangingPwd(false);
+    }
   };
 
   const backup = () => {
@@ -120,32 +190,19 @@ function SettingsPage() {
     reader.readAsText(file);
   };
 
-  const changePassword = () => {
-    if (pwd.next.length < 6) {
-      toast.error("New password must be at least 6 characters");
-      return;
-    }
-    if (pwd.next !== pwd.confirm) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    setPwd({ current: "", next: "", confirm: "" });
-    toast.success("Password changed successfully");
-  };
-
   return (
-    <AppShell title="Settings" subtitle="Personalise the system and manage your data">
+    <AppShell title={t("settings")} subtitle={t("settingsSubtitle")}>
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="Profile Settings" description="Your account details" icon={User}>
+        <Card title={t("profile")} description={t("profileDesc")} icon={User}>
           <div className="space-y-1.5">
-            <Label>Full name</Label>
+            <Label>{t("fullName")}</Label>
             <Input
               value={profile.name}
               onChange={(e) => setProfile({ ...profile, name: e.target.value })}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Email</Label>
+            <Label>{t("email")}</Label>
             <Input
               type="email"
               value={profile.email}
@@ -153,18 +210,19 @@ function SettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Role</Label>
+            <Label>{t("role")}</Label>
             <Input
               value={profile.role}
               onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+              disabled
             />
           </div>
-          <Button onClick={() => toast.success("Profile saved")}>Save profile</Button>
+          <Button onClick={saveProfile} disabled={isSaving}>{t("saveProfile")}</Button>
         </Card>
 
-        <Card title="Change Password" description="Keep your account secure" icon={KeyRound}>
+        <Card title={t("changePassword")} description={t("changePwdDesc")} icon={KeyRound}>
           <div className="space-y-1.5">
-            <Label>Current password</Label>
+            <Label>{t("currentPwd")}</Label>
             <Input
               type="password"
               value={pwd.current}
@@ -172,7 +230,7 @@ function SettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>New password</Label>
+            <Label>{t("newPwd")}</Label>
             <Input
               type="password"
               value={pwd.next}
@@ -180,58 +238,49 @@ function SettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Confirm new password</Label>
+            <Label>{t("confirmPwd")}</Label>
             <Input
               type="password"
               value={pwd.confirm}
               onChange={(e) => setPwd({ ...pwd, confirm: e.target.value })}
             />
           </div>
-          <Button onClick={changePassword}>Update password</Button>
+          <Button onClick={changePassword} disabled={isChangingPwd}>{t("updatePwd")}</Button>
         </Card>
 
         <Card
-          title="Notifications"
-          description="Choose what the system alerts you about"
+          title={t("notifications")}
+          description={t("notifDesc")}
           icon={Globe}
         >
-          {(
-            [
-              ["lowStock", "Low stock warnings"],
-              ["delivery", "New delivery recorded"],
-              ["weekly", "Weekly summary email"],
-            ] as const
-          ).map(([key, label]) => (
-            <div
-              key={key}
-              className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3"
-            >
-              <span className="text-sm font-medium">{label}</span>
-              <Switch
-                checked={notif[key]}
-                onCheckedChange={(v) => {
-                  setNotif({ ...notif, [key]: v });
-                  toast.success(`${label} ${v ? "enabled" : "disabled"}`);
-                }}
-              />
-            </div>
-          ))}
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
+            <span className="text-sm font-medium">{t("lowStock")}</span>
+            <Switch checked={notif.lowStock} onCheckedChange={(v) => handleNotifChange("lowStock", v)} />
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
+            <span className="text-sm font-medium">{t("delivery")}</span>
+            <Switch checked={notif.delivery} onCheckedChange={(v) => handleNotifChange("delivery", v)} />
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
+            <span className="text-sm font-medium">{t("weekly")}</span>
+            <Switch checked={notif.weekly} onCheckedChange={(v) => handleNotifChange("weekly", v)} />
+          </div>
         </Card>
 
         <Card
-          title="Appearance & Language"
-          description="Theme and interface language"
+          title={t("appearance")}
+          description={t("appDesc")}
           icon={dark ? Moon : Sun}
         >
           <div className="flex items-center justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
-            <span className="text-sm font-medium">Dark mode</span>
+            <span className="text-sm font-medium">{t("darkMode")}</span>
             <Switch checked={dark} onCheckedChange={toggleTheme} />
           </div>
           <div className="space-y-1.5">
-            <Label>Language</Label>
+            <Label>{t("language")}</Label>
             <Select
-              value={language}
-              onValueChange={(v) => {
+              value={lang}
+              onValueChange={(v: any) => {
                 setLanguage(v);
                 toast.success(`Language set to ${v}`);
               }}
@@ -249,8 +298,8 @@ function SettingsPage() {
         </Card>
 
         <Card
-          title="Data Backup & Restore"
-          description="Your records are stored in this browser"
+          title={t("backup")}
+          description={t("backupDesc")}
           icon={Database}
         >
           <p className="text-sm text-muted-foreground">
@@ -258,11 +307,11 @@ function SettingsPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             <Button onClick={backup}>
-              <Download className="mr-2 h-4 w-4" /> Download backup
+              <Download className="mr-2 h-4 w-4" /> {t("downloadBackup")}
             </Button>
             <Button variant="outline" asChild>
               <label className="cursor-pointer">
-                <Upload className="mr-2 h-4 w-4" /> Restore backup
+                <Upload className="mr-2 h-4 w-4" /> {t("restoreBackup")}
                 <input
                   type="file"
                   accept="application/json"

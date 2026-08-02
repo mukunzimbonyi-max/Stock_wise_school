@@ -1,8 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Trash2, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { useStockRecords } from "@/lib/stock-store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useStockRecords, useFoodItems, useReleases, byFoodItem, UNITS } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/food-destroyed")({
   head: () => ({
@@ -23,8 +43,53 @@ export const Route = createFileRoute("/food-destroyed")({
 });
 
 function FoodDestroyed() {
-  const { records } = useStockRecords();
+  const { records, add } = useStockRecords();
+  const { foodItems } = useFoodItems();
+  const { releases } = useReleases();
   const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [form, setForm] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    foodItem: "Rice",
+    unit: "Kg",
+    startedWith: 0,
+    destroyed: 0,
+    thrownAway: 0,
+    explanation: "",
+  });
+
+  useEffect(() => {
+    const currentStock = byFoodItem(records, releases).find((r) => r.item === form.foodItem)?.remaining || 0;
+    setForm((f) => ({ ...f, startedWith: currentStock }));
+  }, [form.foodItem, records, releases]);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.destroyed <= 0 && form.thrownAway <= 0) {
+      toast.error("Please enter a destroyed or thrown away quantity");
+      return;
+    }
+    if (!form.explanation.trim()) {
+      toast.error("Please provide an explanation for the loss");
+      return;
+    }
+
+    add({
+      ...form,
+      received: 0,
+      supplierName: "N/A",
+      supplierSignature: "",
+      provided: 0,
+      cookName: "",
+      cookSignature: "",
+    });
+
+    toast.success("Record added", {
+      description: `Recorded ${form.destroyed + form.thrownAway} ${form.unit} lost for ${form.foodItem}`,
+    });
+    setIsOpen(false);
+    setForm({ ...form, destroyed: 0, thrownAway: 0, explanation: "" });
+  };
 
   const destroyedRows = records
     .filter((r) => r.destroyed > 0 || r.thrownAway > 0)
@@ -45,18 +110,24 @@ function FoodDestroyed() {
     >
       <div className="space-y-5">
         <div className="card-surface overflow-hidden">
-          <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-destructive/10 text-destructive">
-              <Trash2 className="h-5 w-5" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-destructive/10 text-destructive">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold">Food Destroyed Summary</h2>
+                <p className="text-xs text-muted-foreground">
+                  Destroyed: <span className="font-semibold text-destructive">{totalDestroyed}</span> units &nbsp;·&nbsp;
+                  Thrown away: <span className="font-semibold text-warning">{totalThrown}</span> units &nbsp;·&nbsp;
+                  Total loss: <span className="font-semibold">{totalDestroyed + totalThrown}</span> units
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold">Food Destroyed Summary</h2>
-              <p className="text-xs text-muted-foreground">
-                Destroyed: <span className="font-semibold text-destructive">{totalDestroyed}</span> units &nbsp;·&nbsp;
-                Thrown away: <span className="font-semibold text-warning">{totalThrown}</span> units &nbsp;·&nbsp;
-                Total loss: <span className="font-semibold">{totalDestroyed + totalThrown}</span> units
-              </p>
-            </div>
+            <Button onClick={() => setIsOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Record Destroyed
+            </Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-sm">
@@ -97,6 +168,102 @@ function FoodDestroyed() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <form onSubmit={submit}>
+            <DialogHeader>
+              <DialogTitle>Record Food Destroyed / Lost</DialogTitle>
+              <DialogDescription>
+                Log food that can no longer be used due to spoilage, pests, or accidents.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Food Item</Label>
+                  <Select
+                    value={form.foodItem}
+                    onValueChange={(v) => setForm({ ...form, foodItem: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {foodItems.map((f) => (
+                        <SelectItem key={f} value={f}>
+                          {f}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Unit</Label>
+                  <Select
+                    value={form.unit}
+                    onValueChange={(v) => setForm({ ...form, unit: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNITS.map((u) => (
+                        <SelectItem key={u} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Destroyed</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.destroyed}
+                    onChange={(e) => setForm({ ...form, destroyed: Number(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Thrown Away</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.thrownAway}
+                    onChange={(e) => setForm({ ...form, thrownAway: Number(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Explanation / Reason</Label>
+                <Textarea
+                  value={form.explanation}
+                  onChange={(e) => setForm({ ...form, explanation: e.target.value })}
+                  placeholder="Explain why this food was lost..."
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Record</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

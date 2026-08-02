@@ -213,7 +213,7 @@ stockRouter.get("/public-stats", async (_req, res) => {
   try {
     const [itemsResult, releasesResult, recordsResult] = await Promise.all([
       pool.query("SELECT name FROM food_items"),
-      pool.query("SELECT COALESCE(SUM(students_fed), 0) AS total_students FROM releases"),
+      pool.query("SELECT COALESCE(SUM(students_fed), 0) AS total_students FROM release_records"),
       pool.query("SELECT COUNT(*) FROM records"),
     ]);
 

@@ -44,8 +44,7 @@ export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt"
 export const NEW_ITEM_VALUE = "__new_item__";
 export const UNITS = ["Kg", "Litre", "Bag", "Carton"];
 
-export function useUnits() {
-  const { records } = useStockRecords();
+export function useUnits(records: StockRecord[] = []) {
   return Array.from(new Set([...UNITS, ...records.map((r) => r.unit)])).sort();
 }
 

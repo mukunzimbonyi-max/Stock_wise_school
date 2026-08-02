@@ -82,7 +82,7 @@ function AddStock() {
   const { releases } = useReleases();
   const { school, setSchool } = useSchoolInfo();
   const { foodItems, addFoodItem } = useFoodItems();
-  const units = useUnits();
+  const units = useUnits(records);
   const navigate = useNavigate();
   const [form, setForm] = useState(empty);
   const [customMode, setCustomMode] = useState(false);

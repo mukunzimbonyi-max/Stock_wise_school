@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { API_URL } from "./api";
 
 export type StockRecord = {
   id: string;
@@ -40,257 +41,261 @@ export type SchoolInfo = {
 };
 
 export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar"];
-
 export const NEW_ITEM_VALUE = "__new_item__";
-
 export const UNITS = ["Kg", "Litre", "Bag", "Carton"];
-
 export const totalUsed = (r: StockRecord) => r.provided + r.destroyed + r.thrownAway;
 export const remaining = (r: StockRecord) => r.startedWith + r.received - totalUsed(r);
-
 export const LOW_STOCK_THRESHOLD = 40;
 
-const uid = () => Math.random().toString(36).slice(2, 10);
+// ─── Snake ↔ Camel conversion ─────────────────────────────────────────────────
 
-const day = (offset: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - offset);
-  return d.toISOString().slice(0, 10);
-};
+function toStockRecord(row: Record<string, unknown>): StockRecord {
+  return {
+    id: String(row.id),
+    date: String(row.date).slice(0, 10),
+    foodItem: String(row.food_item),
+    unit: String(row.unit),
+    startedWith: Number(row.started_with),
+    received: Number(row.received),
+    supplierName: String(row.supplier_name ?? ""),
+    supplierSignature: String(row.supplier_signature ?? ""),
+    provided: Number(row.provided),
+    cookName: String(row.cook_name ?? ""),
+    cookSignature: String(row.cook_signature ?? ""),
+    destroyed: Number(row.destroyed),
+    thrownAway: Number(row.thrown_away),
+    explanation: String(row.explanation ?? ""),
+  };
+}
 
-export const sampleStockData: StockRecord[] = [
-  {
-    id: uid(),
-    date: day(1),
-    foodItem: "Rice",
-    unit: "Kg",
-    startedWith: 320,
-    received: 200,
-    supplierName: "Huye Agro Supplies",
-    supplierSignature: "Niyogisubizo Jeremie",
-    provided: 180,
-    cookName: "Niyogisubizo Jeremie",
-    cookSignature: "Niyogisubizo Jeremie",
-    destroyed: 0,
-    thrownAway: 4,
-    explanation: "Normal daily feeding for 480 students.",
-  },
-  {
-    id: uid(),
-    date: day(2),
-    foodItem: "Beans",
-    unit: "Kg",
-    startedWith: 260,
-    received: 120,
-    supplierName: "Ngoma Farmers Coop",
-    supplierSignature: "Niyogisubizo Jeremie",
-    provided: 150,
-    cookName: "Niyogisubizo Jeremie",
-    cookSignature: "Niyogisubizo Jeremie",
-    destroyed: 6,
-    thrownAway: 2,
-    explanation: "6kg destroyed due to weevils in old sack.",
-  },
-  {
-    id: uid(),
-    date: day(3),
-    foodItem: "Maize Flour",
-    unit: "Kg",
-    startedWith: 180,
-    received: 90,
-    supplierName: "Rwabuye Milling",
-    supplierSignature: "Niyogisubizo Jeremie",
-    provided: 210,
-    cookName: "Niyogisubizo Jeremie",
-    cookSignature: "Niyogisubizo Jeremie",
-    destroyed: 0,
-    thrownAway: 0,
-    explanation: "Porridge for morning break.",
-  },
-  {
-    id: uid(),
-    date: day(4),
-    foodItem: "Cooking Oil",
-    unit: "Litre",
-    startedWith: 60,
-    received: 40,
-    supplierName: "Huye Agro Supplies",
-    supplierSignature: "Niyogisubizo Jeremie",
-    provided: 55,
-    cookName: "Niyogisubizo Jeremie",
-    cookSignature: "Niyogisubizo Jeremie",
-    destroyed: 0,
-    thrownAway: 1,
-    explanation: "1L spilled during transfer.",
-  },
-  {
-    id: uid(),
-    date: day(6),
-    foodItem: "Salt",
-    unit: "Kg",
-    startedWith: 30,
-    received: 10,
-    supplierName: "Kigali Wholesale",
-    supplierSignature: "Niyogisubizo Jeremie",
-    provided: 8,
-    cookName: "Niyogisubizo Jeremie",
-    cookSignature: "Niyogisubizo Jeremie",
-    destroyed: 0,
-    thrownAway: 0,
-    explanation: "Routine usage.",
-  },
-  {
-    id: uid(),
-    date: day(8),
-    foodItem: "Sugar",
-    unit: "Kg",
-    startedWith: 75,
-    received: 25,
-    supplierName: "Kigali Wholesale",
-    supplierSignature: "Niyogisubizo Jeremie",
-    provided: 62,
-    cookName: "Niyogisubizo Jeremie",
-    cookSignature: "Niyogisubizo Jeremie",
-    destroyed: 2,
-    thrownAway: 0,
-    explanation: "2kg wet and destroyed after rain leak.",
-  },
-];
+function toReleaseRecord(row: Record<string, unknown>): ReleaseRecord {
+  return {
+    id: String(row.id),
+    date: String(row.date).slice(0, 10),
+    foodItem: String(row.food_item),
+    startedWith: Number(row.started_with),
+    quantity: Number(row.quantity),
+    cookName: String(row.cook_name ?? ""),
+    studentsFed: Number(row.students_fed ?? 0),
+    mealType: String(row.meal_type ?? ""),
+    notes: String(row.notes ?? ""),
+    cookSignature: String(row.cook_signature ?? ""),
+    remaining: row.remaining !== null && row.remaining !== undefined ? Number(row.remaining) : undefined,
+  };
+}
 
-export const sampleReleases: ReleaseRecord[] = [
-  {
-    id: uid(),
-    date: day(1),
-    foodItem: "Rice",
-    startedWith: 520,
-    quantity: 180,
-    cookName: "Niyogisubizo Jeremie",
-    studentsFed: 480,
-    mealType: "Lunch",
-    notes: "Served with beans",
-    cookSignature: "Niyogisubizo Jeremie",
-    remaining: 340,
-  },
-  {
-    id: uid(),
-    date: day(2),
-    foodItem: "Maize Flour",
-    startedWith: 270,
-    quantity: 90,
-    cookName: "Niyogisubizo Jeremie",
-    studentsFed: 460,
-    mealType: "Breakfast",
-    notes: "Porridge",
-    cookSignature: "Niyogisubizo Jeremie",
-    remaining: 180,
-  },
-  {
-    id: uid(),
-    date: day(3),
-    foodItem: "Beans",
-    startedWith: 380,
-    quantity: 150,
-    cookName: "Niyogisubizo Jeremie",
-    studentsFed: 475,
-    mealType: "Lunch",
-    notes: "",
-    cookSignature: "Niyogisubizo Jeremie",
-    remaining: 230,
-  },
-];
+function stockToBody(r: Omit<StockRecord, "id">) {
+  return {
+    date: r.date,
+    food_item: r.foodItem,
+    unit: r.unit,
+    started_with: r.startedWith,
+    received: r.received,
+    supplier_name: r.supplierName,
+    supplier_signature: r.supplierSignature,
+    provided: r.provided,
+    cook_name: r.cookName,
+    cook_signature: r.cookSignature,
+    destroyed: r.destroyed,
+    thrown_away: r.thrownAway,
+    explanation: r.explanation,
+  };
+}
 
-export const defaultSchool: SchoolInfo = {
-  name: "GS NKUBI",
-  category: "Day School",
-  number: "GS-2024-0417",
-  district: "Huye",
-  academicYear: "2025-2026",
-};
+function releaseToBody(r: Omit<ReleaseRecord, "id">) {
+  return {
+    date: r.date,
+    food_item: r.foodItem,
+    started_with: r.startedWith,
+    quantity: r.quantity,
+    cook_name: r.cookName,
+    students_fed: r.studentsFed,
+    meal_type: r.mealType,
+    notes: r.notes,
+    cook_signature: r.cookSignature,
+    remaining: r.remaining,
+  };
+}
 
-function usePersistent<T>(key: string, initial: T) {
-  const [value, setValue] = useState<T>(initial);
+// ─── Stock Records ────────────────────────────────────────────────────────────
+
+export function useStockRecords() {
+  const [records, setRecords] = useState<StockRecord[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRecords = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/stock/records`);
+      if (!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      setRecords(rows.map(toStockRecord));
+    } catch (err) {
+      console.error("Failed to load stock records:", err);
+      setError("Failed to load stock records");
+    } finally {
+      setLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => { fetchRecords(); }, [fetchRecords]);
+
+  const add = useCallback(async (r: Omit<StockRecord, "id">) => {
+    const res = await fetch(`${API_URL}/api/stock/records`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(stockToBody(r)),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const row = await res.json();
+    setRecords((p) => [toStockRecord(row), ...p]);
+  }, []);
+
+  const update = useCallback(async (id: string, r: Partial<StockRecord>) => {
+    const existing = records.find((x) => x.id === id);
+    if (!existing) return;
+    const merged = { ...existing, ...r };
+    const res = await fetch(`${API_URL}/api/stock/records/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(stockToBody(merged)),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const row = await res.json();
+    setRecords((p) => p.map((x) => (x.id === id ? toStockRecord(row) : x)));
+  }, [records]);
+
+  const remove = useCallback(async (id: string) => {
+    const res = await fetch(`${API_URL}/api/stock/records/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await res.text());
+    setRecords((p) => p.filter((x) => x.id !== id));
+  }, []);
+
+  return { records, setRecords, add, update, remove, loaded, error, refetch: fetchRecords };
+}
+
+// ─── Release Records ──────────────────────────────────────────────────────────
+
+export function useReleases() {
+  const [releases, setReleases] = useState<ReleaseRecord[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReleases = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/stock/releases`);
+      if (!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      setReleases(rows.map(toReleaseRecord));
+    } catch (err) {
+      console.error("Failed to load releases:", err);
+      setError("Failed to load releases");
+    } finally {
+      setLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => { fetchReleases(); }, [fetchReleases]);
+
+  const add = useCallback(async (r: Omit<ReleaseRecord, "id">) => {
+    const res = await fetch(`${API_URL}/api/stock/releases`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(releaseToBody(r)),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const row = await res.json();
+    setReleases((p) => [toReleaseRecord(row), ...p]);
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    const res = await fetch(`${API_URL}/api/stock/releases/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(await res.text());
+    setReleases((p) => p.filter((x) => x.id !== id));
+  }, []);
+
+  return { releases, add, remove, loaded, error, refetch: fetchReleases };
+}
+
+// ─── School Info ──────────────────────────────────────────────────────────────
+
+export function useSchoolInfo() {
+  const [school, setSchoolState] = useState<SchoolInfo>({
+    name: "GS NKUBI",
+    category: "Day School",
+    number: "GS-2024-0417",
+    district: "Huye",
+    academicYear: "2025-2026",
+  });
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) setValue(JSON.parse(raw) as T);
-    } catch {
-      /* ignore */
-    }
-    setLoaded(true);
-  }, [key]);
+    fetch(`${API_URL}/api/stock/school`)
+      .then((r) => r.json())
+      .then((row) => {
+        setSchoolState({
+          name: row.name ?? "",
+          category: row.category ?? "",
+          number: row.number ?? "",
+          district: row.district ?? "",
+          academicYear: row.academic_year ?? "",
+        });
+      })
+      .catch((err) => console.error("Failed to load school info:", err))
+      .finally(() => setLoaded(true));
+  }, []);
 
-  useEffect(() => {
-    if (!loaded) return;
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      /* ignore */
-    }
-  }, [key, value, loaded]);
+  const setSchool = useCallback(async (info: SchoolInfo) => {
+    const res = await fetch(`${API_URL}/api/stock/school`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: info.name,
+        category: info.category,
+        number: info.number,
+        district: info.district,
+        academic_year: info.academicYear,
+      }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    setSchoolState(info);
+  }, []);
 
-  return [value, setValue, loaded] as const;
-}
-
-export function useStockRecords() {
-  const [records, setRecords, loaded] = usePersistent<StockRecord[]>(
-    "sfsms.stock",
-    sampleStockData,
-  );
-
-  const add = useCallback(
-    (r: Omit<StockRecord, "id">) => setRecords((p) => [{ ...r, id: uid() }, ...p]),
-    [setRecords],
-  );
-  const update = useCallback(
-    (id: string, r: Partial<StockRecord>) =>
-      setRecords((p) => p.map((x) => (x.id === id ? { ...x, ...r } : x))),
-    [setRecords],
-  );
-  const remove = useCallback(
-    (id: string) => setRecords((p) => p.filter((x) => x.id !== id)),
-    [setRecords],
-  );
-
-  return { records, setRecords, add, update, remove, loaded };
-}
-
-export function useReleases() {
-  const [releases, setReleases, loaded] = usePersistent<ReleaseRecord[]>(
-    "sfsms.releases",
-    sampleReleases,
-  );
-  const add = useCallback(
-    (r: Omit<ReleaseRecord, "id">) => setReleases((p) => [{ ...r, id: uid() }, ...p]),
-    [setReleases],
-  );
-  const remove = useCallback(
-    (id: string) => setReleases((p) => p.filter((x) => x.id !== id)),
-    [setReleases],
-  );
-  return { releases, add, remove, loaded };
-}
-
-export function useSchoolInfo() {
-  const [school, setSchool, loaded] = usePersistent<SchoolInfo>("sfsms.school", defaultSchool);
   return { school, setSchool, loaded };
 }
 
+// ─── Food Items ───────────────────────────────────────────────────────────────
+
 export function useFoodItems() {
-  const [foodItems, setFoodItems, loaded] = usePersistent<string[]>("sfsms.foodItems", FOOD_ITEMS);
-  const addFoodItem = useCallback(
-    (name: string) => {
-      const clean = name.trim();
-      if (!clean) return;
-      setFoodItems((p) =>
-        p.some((x) => x.toLowerCase() === clean.toLowerCase()) ? p : [...p, clean],
-      );
-    },
-    [setFoodItems],
-  );
+  const [foodItems, setFoodItems] = useState<string[]>(FOOD_ITEMS);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/stock/food-items`)
+      .then((r) => r.json())
+      .then((items: string[]) => setFoodItems(items))
+      .catch((err) => console.error("Failed to load food items:", err))
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const addFoodItem = useCallback(async (name: string) => {
+    const clean = name.trim();
+    if (!clean) return;
+    const res = await fetch(`${API_URL}/api/stock/food-items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: clean }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    setFoodItems((p) =>
+      p.some((x) => x.toLowerCase() === clean.toLowerCase()) ? p : [...p, clean]
+    );
+  }, []);
+
   return { foodItems, addFoodItem, loaded };
 }
+
+// ─── Aggregation helpers (unchanged) ─────────────────────────────────────────
 
 export function summarize(records: StockRecord[], releases: ReleaseRecord[] = []) {
   const perItem = byFoodItem(records, releases);
@@ -303,40 +308,36 @@ export function summarize(records: StockRecord[], releases: ReleaseRecord[] = []
 
 export function byFoodItem(records: StockRecord[], releases: ReleaseRecord[] = []) {
   const items = Array.from(new Set([
-    ...FOOD_ITEMS, 
+    ...FOOD_ITEMS,
     ...records.map((r) => r.foodItem),
-    ...releases.map((r) => r.foodItem)
+    ...releases.map((r) => r.foodItem),
   ]));
-  
+
   return items.map((item) => {
-    const itemRecords = records.filter(r => r.foodItem === item);
-    const itemReleases = releases.filter(r => r.foodItem === item);
-    
+    const itemRecords = records.filter((r) => r.foodItem === item);
+    const itemReleases = releases.filter((r) => r.foodItem === item);
+
     const received = itemRecords.reduce((s, r) => s + r.received, 0);
-    const released = itemRecords.reduce((s, r) => s + r.provided, 0) + 
-                     itemReleases.reduce((s, r) => s + r.quantity, 0);
-                     
+    const released =
+      itemRecords.reduce((s, r) => s + r.provided, 0) +
+      itemReleases.reduce((s, r) => s + r.quantity, 0);
+
     const allEvents = [
-      ...itemRecords.map(r => ({ ...r, type: 'stock', time: new Date(r.date).getTime() })),
-      ...itemReleases.map(r => ({ ...r, type: 'release', time: new Date(r.date).getTime() }))
+      ...itemRecords.map((r) => ({ ...r, type: "stock", time: new Date(r.date).getTime() })),
+      ...itemReleases.map((r) => ({ ...r, type: "release", time: new Date(r.date).getTime() })),
     ].sort((a, b) => a.time - b.time);
 
     let currentStock = 0;
     for (const event of allEvents) {
-      if (event.type === 'stock') {
-        const r = event as (StockRecord & { type: string });
+      if (event.type === "stock") {
+        const r = event as StockRecord & { type: string };
         currentStock = r.startedWith + r.received - totalUsed(r);
       } else {
-        const r = event as (ReleaseRecord & { type: string });
+        const r = event as ReleaseRecord & { type: string };
         currentStock -= r.quantity;
       }
     }
 
-    return {
-      item,
-      received,
-      released,
-      remaining: currentStock,
-    };
+    return { item, received, released, remaining: currentStock };
   }).filter((r) => r.received || r.released || r.remaining);
 }

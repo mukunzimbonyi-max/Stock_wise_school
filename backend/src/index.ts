@@ -16,6 +16,53 @@ async function initDB() {
         password VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS stock_records (
+        id SERIAL PRIMARY KEY,
+        date DATE NOT NULL,
+        food_item VARCHAR(255) NOT NULL,
+        unit VARCHAR(50) NOT NULL,
+        started_with NUMERIC NOT NULL DEFAULT 0,
+        received NUMERIC NOT NULL DEFAULT 0,
+        supplier_name VARCHAR(255),
+        supplier_signature VARCHAR(255),
+        provided NUMERIC NOT NULL DEFAULT 0,
+        cook_name VARCHAR(255),
+        cook_signature VARCHAR(255),
+        destroyed NUMERIC NOT NULL DEFAULT 0,
+        thrown_away NUMERIC NOT NULL DEFAULT 0,
+        explanation TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS release_records (
+        id SERIAL PRIMARY KEY,
+        date DATE NOT NULL,
+        food_item VARCHAR(255) NOT NULL,
+        started_with NUMERIC NOT NULL DEFAULT 0,
+        quantity NUMERIC NOT NULL DEFAULT 0,
+        cook_name VARCHAR(255),
+        students_fed INTEGER,
+        meal_type VARCHAR(100),
+        notes TEXT,
+        cook_signature VARCHAR(255),
+        remaining NUMERIC,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS school_info (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(255),
+        number VARCHAR(255),
+        district VARCHAR(255),
+        academic_year VARCHAR(50)
+      );
+
+      CREATE TABLE IF NOT EXISTS food_items (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) UNIQUE NOT NULL
+      );
     `);
     console.log("Database tables ready.");
   } catch (err) {

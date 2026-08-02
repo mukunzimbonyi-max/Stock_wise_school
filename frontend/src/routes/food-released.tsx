@@ -317,6 +317,67 @@ function FoodReleased() {
             </table>
           </div>
         </div>
+
+        {/* Destroyed / Food Lost Table */}
+        {(() => {
+          const destroyedRows = records
+            .filter((r) => r.destroyed > 0 || r.thrownAway > 0)
+            .filter((r) =>
+              `${r.foodItem} ${r.explanation}`.toLowerCase().includes(search.toLowerCase()),
+            )
+            .sort((a, b) => b.date.localeCompare(a.date));
+
+          const totalDestroyed = records.reduce((s, r) => s + r.destroyed, 0);
+          const totalThrown = records.reduce((s, r) => s + r.thrownAway, 0);
+
+          return (
+            <div className="card-surface overflow-hidden">
+              <div className="border-b border-border px-5 py-4 flex items-center gap-3">
+                <Trash2 className="h-5 w-5 text-destructive" />
+                <div>
+                  <h2 className="text-base font-bold">Food Destroyed / Lost</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Destroyed: <span className="font-semibold text-destructive">{totalDestroyed}</span> units &nbsp;·&nbsp;
+                    Thrown away: <span className="font-semibold text-warning">{totalThrown}</span> units &nbsp;·&nbsp;
+                    Total loss: <span className="font-semibold">{totalDestroyed + totalThrown}</span> units
+                  </p>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[700px] text-sm">
+                  <thead className="bg-muted/60">
+                    <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                      {["Date", "Food Item", "Destroyed", "Thrown Away", "Total Lost", "Reason / Explanation"].map((h) => (
+                        <th key={h} className="whitespace-nowrap px-4 py-3 font-semibold">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {destroyedRows.map((r) => (
+                      <tr key={r.id} className="border-t border-border/70 transition-colors hover:bg-muted/40">
+                        <td className="whitespace-nowrap px-4 py-3">{r.date}</td>
+                        <td className="px-4 py-3 font-medium">{r.foodItem}</td>
+                        <td className="px-4 py-3 font-semibold text-destructive">{r.destroyed}</td>
+                        <td className="px-4 py-3 font-semibold text-warning">{r.thrownAway}</td>
+                        <td className="px-4 py-3 font-bold">{r.destroyed + r.thrownAway}</td>
+                        <td className="max-w-[280px] truncate px-4 py-3 text-muted-foreground">
+                          {r.explanation || "—"}
+                        </td>
+                      </tr>
+                    ))}
+                    {destroyedRows.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                          No destroyed or lost food recorded yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>

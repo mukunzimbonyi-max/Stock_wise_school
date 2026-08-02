@@ -33,10 +33,10 @@ import {
 import {
   LOW_STOCK_THRESHOLD,
   remaining,
-  totalUsed,
   useFoodItems,
   useStockRecords,
   type StockRecord,
+  NEW_ITEM_VALUE,
 } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/stock-records")({
@@ -62,15 +62,16 @@ const PAGE_SIZE = 5;
 
 function StockRecords() {
   const { records, update, remove } = useStockRecords();
-  const { foodItems } = useFoodItems();
+  const { foodItems, addFoodItem } = useFoodItems();
   const [search, setSearch] = useState("");
   const [date, setDate] = useState("");
   const [item, setItem] = useState("all");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("date-desc");
   const [page, setPage] = useState(1);
-  const [viewing, setViewing] = useState<StockRecord | null>(null);
   const [editing, setEditing] = useState<StockRecord | null>(null);
+  const [editCustomMode, setEditCustomMode] = useState(false);
+  const [editCustomItem, setEditCustomItem] = useState("");
   const [deleting, setDeleting] = useState<StockRecord | null>(null);
 
   const filtered = useMemo(() => {
@@ -427,8 +428,15 @@ function StockRecords() {
               <div className="space-y-1.5">
                 <Label>Food item</Label>
                 <Select
-                  value={editing.foodItem}
-                  onValueChange={(v) => setEditing({ ...editing, foodItem: v })}
+                  value={editCustomMode ? NEW_ITEM_VALUE : editing.foodItem}
+                  onValueChange={(v) => {
+                    if (v === NEW_ITEM_VALUE) {
+                      setEditCustomMode(true);
+                    } else {
+                      setEditCustomMode(false);
+                      setEditing({ ...editing, foodItem: v });
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -439,8 +447,18 @@ function StockRecords() {
                         {f}
                       </SelectItem>
                     ))}
+                    <SelectItem value={NEW_ITEM_VALUE}>Other / New item…</SelectItem>
                   </SelectContent>
                 </Select>
+                {editCustomMode && (
+                  <Input
+                    value={editCustomItem}
+                    onChange={(e) => setEditCustomItem(e.target.value)}
+                    placeholder="Enter new item name"
+                    autoFocus
+                    className="mt-2"
+                  />
+                )}
               </div>
               {(
                 [
@@ -488,8 +506,21 @@ function StockRecords() {
                   toast.error("Remaining stock cannot be negative");
                   return;
                 }
-                update(editing.id, editing);
+                
+                if (editCustomMode && !editCustomItem.trim()) {
+                  toast.error("Enter the name of the new item");
+                  return;
+                }
+                let finalItem = editing.foodItem;
+                if (editCustomMode && editCustomItem.trim()) {
+                  addFoodItem(editCustomItem.trim());
+                  finalItem = editCustomItem.trim();
+                }
+
+                update(editing.id, { ...editing, foodItem: finalItem });
                 setEditing(null);
+                setEditCustomMode(false);
+                setEditCustomItem("");
                 toast.success("Record updated successfully");
               }}
             >

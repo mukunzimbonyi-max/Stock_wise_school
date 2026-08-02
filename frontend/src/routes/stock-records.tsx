@@ -110,25 +110,39 @@ function StockRecords() {
 
   const exportExcel = () => {
     const header = [
-      "Date",
-      "Food Item",
-      "Started With",
-      "Received",
-      "Supplier",
-      "Supplier Signature",
-      "Remaining",
-      "Explanation",
+      "DATE",
+      "STARTED WITH",
+      "RECEIVED",
+      "NAMES OF SUPPLIER",
+      "SIGNATURE",
+      "PROVIDED",
+      "NAMES OF THE COOK",
+      "SIGNATURE",
+      "DESTROYED",
+      "THROWN AWAY",
+      "TOTAL",
+      "REST",
+      "EXPLANATIONS",
     ];
-    const body = filtered.map((r) => [
-      r.date,
-      r.foodItem,
-      r.startedWith,
-      r.received,
-      r.supplierName,
-      r.supplierSignature,
-      remaining(r),
-      r.explanation,
-    ]);
+    const body = filtered.map((r) => {
+      const rem = remaining(r);
+      const destroyedTotal = Number(r.destroyed || 0) + Number(r.thrownAway || 0);
+      return [
+        r.date,
+        r.startedWith,
+        r.received,
+        r.supplierName,
+        r.supplierSignature,
+        r.provided || 0,
+        r.cookName,
+        r.cookSignature,
+        r.destroyed || 0,
+        r.thrownAway || 0,
+        destroyedTotal,
+        rem,
+        r.explanation,
+      ];
+    });
     
     const ws = XLSX.utils.aoa_to_sheet([header, ...body]);
     const wb = XLSX.utils.book_new();
@@ -142,27 +156,46 @@ function StockRecords() {
     doc.text("Stock Records - School Food Stock Management", 14, 15);
 
     const head = [[
-      "Date",
-      "Food Item",
-      "Started With",
-      "Received",
-      "Supplier",
-      "Remaining",
+      "DATE",
+      "STARTED WITH",
+      "RECEIVED",
+      "NAMES OF SUPPLIER",
+      "SIGNATURE",
+      "PROVIDED",
+      "NAMES OF THE COOK",
+      "SIGNATURE",
+      "DESTROYED",
+      "THROWN AWAY",
+      "TOTAL",
+      "REST",
+      "EXPLANATIONS",
     ]];
-    const body = filtered.map((r) => [
-      r.date,
-      r.foodItem,
-      r.startedWith.toString(),
-      r.received.toString(),
-      r.supplierName || "",
-      remaining(r).toString(),
-    ]);
+    const body = filtered.map((r) => {
+      const rem = remaining(r);
+      const destroyedTotal = Number(r.destroyed || 0) + Number(r.thrownAway || 0);
+      return [
+        r.date,
+        r.startedWith.toString(),
+        r.received.toString(),
+        r.supplierName || "",
+        r.supplierSignature || "",
+        (r.provided || 0).toString(),
+        r.cookName || "",
+        r.cookSignature || "",
+        (r.destroyed || 0).toString(),
+        (r.thrownAway || 0).toString(),
+        destroyedTotal.toString(),
+        rem.toString(),
+        r.explanation || "",
+      ];
+    });
 
     autoTable(doc, {
       head,
       body,
       startY: 20,
       theme: "grid",
+      styles: { fontSize: 6 },
     });
 
     doc.save("stock-records.pdf");
@@ -287,78 +320,107 @@ function StockRecords() {
 
         <div className="card-surface overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1500px] text-sm">
-              <thead className="bg-muted/60">
-                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  {[
-                    "Date",
-                    "Food Item",
-                    "Started With",
-                    "Received",
-                    "Supplier Name",
-                    "Supplier Signature",
-                    "Remaining Stock",
-                    "Explanation",
-                    "Actions",
-                  ].map((h) => (
-                    <th key={h} className="whitespace-nowrap px-4 py-3 font-semibold">
-                      {h}
-                    </th>
-                  ))}
+            <table className="w-full min-w-[1600px] text-[13px] border-collapse border border-border">
+              <thead className="bg-muted/80 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                {/* Row 1 */}
+                <tr>
+                  <th colSpan={5} className="border border-border/80 px-4 py-2 text-left">
+                    FOOD TYPE: {item !== "all" ? item : "........................................................"}
+                  </th>
+                  <th colSpan={8} className="border border-border/80 px-4 py-2 text-center text-[12px] bg-muted/60 text-foreground">
+                    THE FOOD THAT WAS RELEASED FOR FEEDING THE STUDENTS.
+                  </th>
+                  <th className="border border-border/80 px-4 py-2"></th>
+                </tr>
+                {/* Row 2 */}
+                <tr>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">DATE</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">STARTED WITH</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">RECEIVED</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">NAMES OF SUPPLIER</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">SIGNATURE</th>
+                  
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">PROVIDED</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">NAMES OF THE COOK</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">SIGNATURE</th>
+                  
+                  <th colSpan={3} className="border border-border/80 px-3 py-1 text-center bg-muted/40">DESTROYED</th>
+                  
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom text-center">REST</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom">EXPLANATIONS</th>
+                  <th rowSpan={2} className="border border-border/80 px-3 py-2 align-bottom text-center">ACTIONS</th>
+                </tr>
+                {/* Row 3 */}
+                <tr>
+                  <th className="border border-border/80 px-3 py-1 bg-muted/40">DESTROYED</th>
+                  <th className="border border-border/80 px-3 py-1 bg-muted/40">THROWN AWAY</th>
+                  <th className="border border-border/80 px-3 py-1 bg-muted/40">TOTAL</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => {
                   const rem = remaining(r);
+                  const destroyedTotal = Number(r.destroyed || 0) + Number(r.thrownAway || 0);
+                  
                   return (
                     <tr
                       key={r.id}
-                      className="border-t border-border/70 transition-colors hover:bg-muted/40"
+                      className="border-t border-border/70 transition-colors hover:bg-muted/40 even:bg-muted/20"
                     >
-                      <td className="whitespace-nowrap px-4 py-3">{r.date}</td>
-                      <td className="whitespace-nowrap px-4 py-3 font-medium">{r.foodItem}</td>
-                      <td className="px-4 py-3">{r.startedWith}</td>
-                      <td className="px-4 py-3">{r.received}</td>
-                      <td className="whitespace-nowrap px-4 py-3">{r.supplierName}</td>
-                      <td className="whitespace-nowrap px-4 py-3 italic text-muted-foreground">
+                      <td className="border border-border/70 whitespace-nowrap px-3 py-2">{r.date}</td>
+                      <td className="border border-border/70 px-3 py-2 font-medium">{r.startedWith}</td>
+                      <td className="border border-border/70 px-3 py-2">{r.received}</td>
+                      <td className="border border-border/70 whitespace-nowrap px-3 py-2 text-muted-foreground">{r.supplierName}</td>
+                      <td className="border border-border/70 whitespace-nowrap px-3 py-2 italic text-muted-foreground">
                         {r.supplierSignature}
                       </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${rem < LOW_STOCK_THRESHOLD ? "bg-warning/15 text-warning" : "bg-success/15 text-success"}`}
-                        >
-                          {rem} {r.unit}
+                      
+                      <td className="border border-border/70 px-3 py-2 font-medium text-foreground">{r.provided || 0}</td>
+                      <td className="border border-border/70 px-3 py-2 text-muted-foreground">{r.cookName}</td>
+                      <td className="border border-border/70 px-3 py-2 italic text-muted-foreground">{r.cookSignature}</td>
+                      
+                      <td className="border border-border/70 px-3 py-2">{r.destroyed || 0}</td>
+                      <td className="border border-border/70 px-3 py-2">{r.thrownAway || 0}</td>
+                      <td className="border border-border/70 px-3 py-2 font-semibold bg-muted/30">{destroyedTotal}</td>
+
+                      <td className="border border-border/70 px-3 py-2 text-center bg-muted/10 font-bold">
+                        <span className={rem < LOW_STOCK_THRESHOLD ? "text-warning" : "text-success"}>
+                          {rem}
                         </span>
                       </td>
-                      <td className="max-w-[240px] truncate px-4 py-3 text-muted-foreground">
+                      
+                      <td className="border border-border/70 max-w-[200px] truncate px-3 py-2 text-muted-foreground">
                         {r.explanation}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <div className="flex gap-1">
+                      
+                      <td className="border border-border/70 whitespace-nowrap px-3 py-1">
+                        <div className="flex justify-center gap-1">
                           <Button
                             size="icon"
                             variant="ghost"
+                            className="h-7 w-7"
                             aria-label="View"
                             onClick={() => setViewing(r)}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
+                            className="h-7 w-7"
                             aria-label="Edit"
                             onClick={() => setEditing({ ...r })}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
                             aria-label="Delete"
-                            className="text-destructive hover:text-destructive"
                             onClick={() => setDeleting(r)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </td>
@@ -367,7 +429,7 @@ function StockRecords() {
                 })}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={15} className="px-4 py-10 text-center text-muted-foreground">
+                    <td colSpan={14} className="px-4 py-10 text-center text-muted-foreground">
                       No records match your filters.
                     </td>
                   </tr>

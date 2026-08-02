@@ -1,9 +1,12 @@
 import cors from "cors";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import { pool } from "./db.js";
 import { authRouter } from "./routes/auth.js";
 import { stockRouter } from "./routes/stock.js";
+import { uploadsRouter, UPLOADS_DIR } from "./routes/uploads.js";
 
 export const app = express();
 
@@ -47,3 +50,5 @@ app.get("/api/health", async (_req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/stock", stockRouter);
+app.use("/api/uploads", uploadsRouter);
+app.use("/uploads", express.static(UPLOADS_DIR));

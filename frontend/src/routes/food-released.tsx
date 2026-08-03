@@ -64,7 +64,7 @@ type PersistedMealPlan = {
 
 const MEAL_PLAN_KEY = "sfsms.mealPlanner";
 
-// Reads the saved meal plan: weekly KG quantity per planned item + total students
+// Reads the saved meal plan: DAILY KG quantity per planned item + total students
 function loadMealPlan(): { quantities: Map<string, number>; totalStudents: number } {
   const quantities = new Map<string, number>();
   let totalStudents = 0;
@@ -83,7 +83,8 @@ function loadMealPlan(): { quantities: Map<string, number>; totalStudents: numbe
         if (!sel?.selected) return;
         const days = Array.isArray(sel.days) ? sel.days.filter(Boolean).length : 0;
         if (!days) return;
-        const qty = Math.round(((prePrimary * item.nursery + primary * item.primary + secondary * item.secondary) * days) / 10) / 100;
+        // Daily quantity (NOT multiplied by days)
+        const qty = Math.round((prePrimary * item.nursery + primary * item.primary + secondary * item.secondary) / 10) / 100;
         if (qty > 0) quantities.set(item.name.toLowerCase(), qty);
       });
     });
@@ -288,7 +289,7 @@ function FoodReleased() {
               />
               {planQtyForItem !== null && (
                 <p className="text-[11px] font-semibold text-primary">
-                  From meal plan: {planQtyForItem} Kg (weekly)
+                  From meal plan: {planQtyForItem} Kg (daily)
                 </p>
               )}
             </div>

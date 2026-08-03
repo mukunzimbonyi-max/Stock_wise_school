@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Printer, Settings2, CheckSquare, Square, PlusCircle, X, BarChart3 } from "lucide-react";
+import { Printer, Settings2, CheckSquare, Square, PlusCircle, X, BarChart3, Download, CalendarRange } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -396,6 +398,35 @@ function MealPlanner() {
   const grandTotal = levelTotals.nursery + levelTotals.primary + levelTotals.secondary;
   const fmtKg = (n: number) => (n > 0 ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "0");
 
+  const dailySchedule = DAY_LABELS.map((label, dayIdx) => {
+    const itemsForDay = allSelectedItems.filter(x => x.sel.days[dayIdx]);
+    return { label, items: itemsForDay };
+  });
+
+  const handleDownloadDailyPlanner = async () => {
+    const element = document.getElementById('daily-planner-container');
+    if (!element) return;
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      const yOffset = imgH < pageH ? (pageH - imgH) / 2 : 0;
+      pdf.addImage(imgData, 'PNG', 0, yOffset, imgW, Math.min(imgH, pageH));
+      pdf.save(`daily_planner_${school.name || 'school'}.pdf`);
+    } catch (err) {
+      console.error('Download failed', err);
+    }
+  };
+
   // Color palette for each category card (top accent border + shadow)  
   const CATEGORY_COLORS = [
     { border: "#f59e0b", shadow: "#f59e0b40", bg: "#fffbeb", text: "#92400e" },   // Cereals – amber
@@ -412,55 +443,53 @@ function MealPlanner() {
     <AppShell title="Meal Planner Poster" subtitle="Print the daily food allocation table">
       <div className="mx-auto max-w-7xl space-y-6 pb-20">
 
-        {/* Controls - Hidden when printing */}
-        <div className="card-surface p-5 sm:p-6 print:hidden">
-          {/* Step 1 Banner */}
-          <div className="flex items-center gap-3 mb-5 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-4 py-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow">1</div>
-            <div>
-              <p className="text-sm font-bold text-primary">Configure Student Demographics</p>
-              <p className="text-xs text-muted-foreground">Enter the number of students per level</p>
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3 mb-8">
-            <div className="space-y-1.5">
-              <Label>Pre-primary / Nursery (Incuke)</Label>
-              <Input type="number" min="0" value={prePrimary} onChange={(e) => setPrePrimary(Number(e.target.value) || 0)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Primary (Abanza)</Label>
-              <Input type="number" min="0" value={primary} onChange={(e) => setPrimary(Number(e.target.value) || 0)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Secondary (Ayisumbuye)</Label>
-              <Input type="number" min="0" value={secondary} onChange={(e) => setSecondary(Number(e.target.value) || 0)} />
-            </div>
-          </div>
+        {/* ─── CONTROLS CARD ─────────────────────────────────────── */}
+        <div className="card-surface overflow-hidden print:hidden">
 
-          {/* Step 2 Banner */}
-          <div className="flex items-center gap-3 mb-5 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-4 py-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow">2</div>
-            <div>
-              <p className="text-sm font-bold text-primary">Select Food Items &amp; Schedule</p>
-              <p className="text-xs text-muted-foreground">Check items, then click the day buttons (M T W Th F)</p>
-            </div>
-          </div>
-
-          {/* Configure Item Grams card */}
-          <div className="mb-6 rounded-2xl border-2 border-primary/30 bg-white p-5 sm:p-6 shadow-lg shadow-primary/10">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Settings2 className="h-4 w-4" />
-              </div>
+          {/* ── SECTION 1: Student Demographics ── */}
+          <div className="px-6 pt-7 pb-6">
+            <div className="flex items-center gap-4 mb-1">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-black shadow-md">1</span>
               <div>
-                <h3 className="text-sm font-bold text-foreground">Set Item Grams (per level)</h3>
-                <p className="text-xs text-muted-foreground">Choose a category, pick an item, then adjust the daily grams for each level</p>
+                <h2 className="text-lg font-extrabold tracking-tight text-foreground">Student Demographics</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Enter the number of students for each education level</p>
               </div>
             </div>
+            {/* Gradient divider */}
+            <div className="my-4 h-px bg-gradient-to-r from-primary/60 via-primary/20 to-transparent rounded-full" />
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Pre-primary / Nursery (Incuke)</Label>
+                <Input type="number" min="0" value={prePrimary} onChange={(e) => setPrePrimary(Number(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Primary (Abanza)</Label>
+                <Input type="number" min="0" value={primary} onChange={(e) => setPrimary(Number(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Secondary (Ayisumbuye)</Label>
+                <Input type="number" min="0" value={secondary} onChange={(e) => setSecondary(Number(e.target.value) || 0)} />
+              </div>
+            </div>
+          </div>
+
+          {/* Full-width divider between sections */}
+          <div className="border-t border-dashed border-border" />
+
+          {/* ── SECTION 2: Edit Standard Grams ── */}
+          <div className="px-6 py-6">
+            <div className="flex items-center gap-4 mb-1">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-400 text-white text-sm font-black shadow-md">2</span>
+              <div>
+                <h2 className="text-lg font-extrabold tracking-tight text-foreground">Edit Standard Grams</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Override the daily gram allocation for any food item per level</p>
+              </div>
+            </div>
+            <div className="my-4 h-px bg-gradient-to-r from-violet-500/60 via-violet-300/20 to-transparent rounded-full" />
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Category</Label>
+                <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Category</Label>
                 <Select value={configCat === "" ? "" : String(configCat)} onValueChange={(v) => selectConfigCategory(Number(v))}>
                   <SelectTrigger><SelectValue placeholder="Choose a category" /></SelectTrigger>
                   <SelectContent>
@@ -471,7 +500,7 @@ function MealPlanner() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Item</Label>
+                <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Item</Label>
                 <Select
                   value={configItem === "" ? "" : String(configItem)}
                   onValueChange={(v) => selectConfigItem(Number(v))}
@@ -491,32 +520,42 @@ function MealPlanner() {
               <>
                 <div className="grid gap-3 sm:grid-cols-3 mt-4">
                   <div className="space-y-1.5">
-                    <Label>Nursery (g)</Label>
+                    <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Nursery (g/day)</Label>
                     <Input type="number" min="0" value={configGrams.nursery} onChange={e => setConfigGrams(g => ({ ...g, nursery: e.target.value }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Primary (g)</Label>
+                    <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Primary (g/day)</Label>
                     <Input type="number" min="0" value={configGrams.primary} onChange={e => setConfigGrams(g => ({ ...g, primary: e.target.value }))} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Secondary (g)</Label>
+                    <Label className="font-semibold text-xs uppercase tracking-wide text-muted-foreground">Secondary (g/day)</Label>
                     <Input type="number" min="0" value={configGrams.secondary} onChange={e => setConfigGrams(g => ({ ...g, secondary: e.target.value }))} />
                   </div>
                 </div>
-
                 {configError && <p className="text-xs text-destructive font-semibold mt-3">{configError}</p>}
-
                 <div className="flex flex-wrap items-center gap-3 mt-4">
                   <Button onClick={submitConfig}>
                     <CheckSquare className="mr-2 h-4 w-4" /> Add to Plan / Update Grams
                   </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Adds the item to the plan with these grams per level.
-                  </p>
+                  <p className="text-xs text-muted-foreground">Adds the item to the plan with these grams per level.</p>
                 </div>
               </>
             )}
           </div>
+
+          {/* Full-width divider between sections */}
+          <div className="border-t border-dashed border-border" />
+
+          {/* ── SECTION 3: Select Food Items & Schedule ── */}
+          <div className="px-6 py-6">
+            <div className="flex items-center gap-4 mb-1">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-400 text-white text-sm font-black shadow-md">3</span>
+              <div>
+                <h2 className="text-lg font-extrabold tracking-tight text-foreground">Select Food Items &amp; Schedule</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Check items to include, then click the day pills (M T W Th F) to choose which days they are served</p>
+              </div>
+            </div>
+            <div className="my-4 h-px bg-gradient-to-r from-emerald-500/60 via-emerald-300/20 to-transparent rounded-full" />
 
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {dictionary.map((cat, cIdx) => {
@@ -655,11 +694,108 @@ function MealPlanner() {
             );
             })}
           </div>
+          </div>
 
-          <div className="mt-8 flex justify-end">
-            <Button onClick={() => window.print()} className="h-11 shadow-lg shadow-primary/20">
-              <Printer className="mr-2 h-4 w-4" /> Print Poster (A4)
+          {/* Full-width divider */}
+          <div className="border-t border-dashed border-border" />
+
+          {/* ── Print button ── */}
+          <div className="px-6 py-5 flex justify-end">
+            <Button onClick={() => window.print()} className="h-11 px-6 shadow-lg shadow-primary/20 gap-2">
+              <Printer className="h-4 w-4" /> Print Poster (A4)
             </Button>
+          </div>
+        </div>
+
+        {/* ─── DAILY PLANNER CARD ─────────────────────────────────── */}
+        <div className="card-surface overflow-hidden print:hidden">
+
+          {/* Section header */}
+          <div className="px-6 pt-7 pb-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-400 text-white text-sm font-black shadow-md">
+                  <CalendarRange className="h-4 w-4" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-extrabold tracking-tight text-foreground">Daily Schedule Planner</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Poster-style daily release table — click Download to save as PDF</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleDownloadDailyPlanner}
+                className="gap-2 shrink-0 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-lg shadow-blue-500/30"
+              >
+                <Download className="h-4 w-4" /> Download PDF
+              </Button>
+            </div>
+            <div className="mt-4 h-px bg-gradient-to-r from-blue-500/60 via-blue-300/20 to-transparent rounded-full" />
+          </div>
+
+          {/* A4-style poster replica */}
+          <div className="px-6 pb-6 pt-5 overflow-x-auto">
+            <div
+              id="daily-planner-container"
+              className="mx-auto bg-white text-black font-bold"
+              style={{ width: "595px", minHeight: "842px", padding: "28px", fontFamily: "Arial, sans-serif" }}
+            >
+              {/* Ornate border wrapper */}
+              <div style={{ border: "10px double black", padding: "24px", minHeight: "786px", display: "flex", flexDirection: "column" }}>
+
+                {/* School Header */}
+                <div style={{ fontSize: "14px", fontWeight: "900", lineHeight: "1.8", textTransform: "uppercase", marginBottom: "20px" }}>
+                  <div>{school.district || "HUYE"} DISTRICT</div>
+                  <div>MUKURA SECTOR</div>
+                  <div>{school.name || "G.S NKUBI"}</div>
+                </div>
+
+                {/* Green Title */}
+                <div style={{ marginBottom: "20px" }}>
+                  <span style={{
+                    background: "#00ff00",
+                    color: "#000",
+                    fontWeight: "900",
+                    fontSize: "20px",
+                    textTransform: "uppercase",
+                    padding: "4px 6px",
+                    display: "inline",
+                    lineHeight: "1.6",
+                  }}>
+                    THE TABLE OF DAILY MEALS PREPARED AT {school.name || "G.S NKUBI"}
+                  </span>
+                </div>
+
+                {/* Main Table */}
+                <table style={{ width: "100%", borderCollapse: "collapse", border: "4px solid black", fontSize: "13px", fontWeight: "900", textTransform: "uppercase", flex: 1 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ border: "3px solid black", padding: "6px 8px", textAlign: "left", background: "#FFD700", width: "35%" }}>ITEMS</th>
+                      <th style={{ border: "3px solid black", padding: "6px 8px", textAlign: "left", background: "#FFD700", width: "20%" }}>QUANTITY</th>
+                      <th style={{ border: "3px solid black", padding: "6px 8px", textAlign: "left", background: "#f5f5a0", width: "45%" }}>DAYS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allSelectedItems.map(({ item, sel }) => {
+                      const dailyQty = calculateDailyQuantity(item);
+                      const unit = item.unit || "KG";
+                      const daysStr = formatDaysString(sel.days);
+                      return (
+                        <tr key={item.name}>
+                          <td style={{ border: "3px solid black", padding: "6px 8px" }}>{item.name}{item.custom ? " *" : ""}</td>
+                          <td style={{ border: "3px solid black", padding: "6px 8px" }}>{dailyQty > 0 ? `${fmtKg(dailyQty)}${unit}` : `0${unit}`}</td>
+                          <td style={{ border: "3px solid black", padding: "6px 8px" }}>{daysStr}.</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Footer */}
+                <div style={{ textAlign: "center", fontWeight: "900", fontSize: "16px", marginTop: "auto", paddingTop: "28px" }}>
+                  ACADEMIC YEAR: {school.academicYear || "2025-2026"}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

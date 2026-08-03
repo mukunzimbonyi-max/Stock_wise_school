@@ -177,7 +177,7 @@ function SchoolInformation() {
               <h3 className="mt-4 text-base font-semibold">Demographics</h3>
             </div>
             
-            {demographicFields.map(([key, label]) => (
+            {demographicFields.filter(f => f[0] !== "totalStudents").map(([key, label]) => (
               <div key={key} className="space-y-1.5">
                 <Label>{label}</Label>
                 <Input
@@ -185,10 +185,29 @@ function SchoolInformation() {
                   min="0"
                   value={draft[key] as number}
                   disabled={!editing}
-                  onChange={(e) => setDraft({ ...draft, [key]: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    setDraft((d) => {
+                      const updated = { ...d, [key]: val };
+                      updated.totalStudents = 
+                        (updated.studentsPrePrimary || 0) + 
+                        (updated.studentsPrimary || 0) + 
+                        (updated.studentsSecondary || 0);
+                      return updated;
+                    });
+                  }}
                 />
               </div>
             ))}
+            <div className="space-y-1.5">
+              <Label>Total Students</Label>
+              <Input
+                type="number"
+                disabled
+                value={(draft.studentsPrePrimary || 0) + (draft.studentsPrimary || 0) + (draft.studentsSecondary || 0)}
+                className="bg-muted font-bold"
+              />
+            </div>
           </div>
         </div>
       </div>

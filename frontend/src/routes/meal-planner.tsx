@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Printer, Settings2, CheckSquare, Square, PlusCircle, X, BarChart3, Download, CalendarRange } from "lucide-react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -403,28 +402,104 @@ function MealPlanner() {
     return { label, items: itemsForDay };
   });
 
-  const handleDownloadDailyPlanner = async () => {
-    const element = document.getElementById('daily-planner-container');
-    if (!element) return;
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      const yOffset = imgH < pageH ? (pageH - imgH) / 2 : 0;
-      pdf.addImage(imgData, 'PNG', 0, yOffset, imgW, Math.min(imgH, pageH));
-      pdf.save(`daily_planner_${school.name || 'school'}.pdf`);
-    } catch (err) {
-      console.error('Download failed', err);
-    }
+  const handleDownloadDailyPlanner = () => {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pw = doc.internal.pageSize.getWidth();   // 210mm
+    const ph = doc.internal.pageSize.getHeight();  // 297mm
+    const margin = 12;
+    const innerL = margin + 4;
+    const innerW = pw - innerL * 2;
+
+    // Outer double border
+    doc.setLineWidth(1.2);
+    doc.setDrawColor(0);
+    doc.rect(margin, margin, pw - margin * 2, ph - margin * 2);
+    doc.setLineWidth(0.5);
+    doc.rect(margin + 2.5, margin + 2.5, pw - margin * 2 - 5, ph - margin * 2 - 5);
+
+    let y = margin + 10;
+
+    // School Header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    const headerLines = [
+      `${(school.district || 'HUYE').toUpperCase()} DISTRICT`,
+      'MUKURA SECTOR',
+      (school.name || 'G.S NKUBI').toUpperCase(),
+    ];
+    headerLines.forEach(line => {
+      doc.text(line, innerL, y);
+      y += 6;
+    });
+    y += 4;
+
+    // Green title bar background
+    const titleText = `THE TABLE OF DAILY MEALS PREPARED AT ${(school.name || 'G.S NKUBI').toUpperCase()}`;
+    doc.setFontSize(13);
+    const titleLines = doc.splitTextToSize(titleText, innerW - 4) as string[];
+    const titleH = titleLines.length * 7 + 4;
+    doc.setFillColor(0, 255, 0);
+    doc.rect(innerL, y, innerW, titleH, 'F');
+    doc.setTextColor(0);
+    titleLines.forEach((line, i) => {
+      doc.text(line, innerL + 2, y + 6 + i * 7);
+    });
+    y += titleH + 6;
+
+    // Table header
+    const colW = [innerW * 0.42, innerW * 0.22, innerW * 0.36];
+    const rowH = 7;
+    doc.setFillColor(255, 215, 0);
+    doc.rect(innerL, y, colW[0], rowH, 'F');
+    doc.rect(innerL + colW[0], y, colW[1], rowH, 'F');
+    doc.setFillColor(245, 245, 160);
+    doc.rect(innerL + colW[0] + colW[1], y, colW[2], rowH, 'F');
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.rect(innerL, y, innerW, rowH);
+    doc.line(innerL + colW[0], y, innerL + colW[0], y + rowH);
+    doc.line(innerL + colW[0] + colW[1], y, innerL + colW[0] + colW[1], y + rowH);
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ITEMS', innerL + 2, y + 5);
+    doc.text('QUANTITY', innerL + colW[0] + 2, y + 5);
+    doc.text('DAYS', innerL + colW[0] + colW[1] + 2, y + 5);
+    y += rowH;
+
+    // Table rows
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    allSelectedItems.forEach(({ item, sel }) => {
+      const dailyQty = calculateDailyQuantity(item);
+      const unit = item.unit || 'KG';
+      const qtyStr = `${fmtKg(dailyQty)}${unit}`;
+      const daysStr = `${formatDaysString(sel.days)}.`;
+      // wrap item name
+      const nameLines = doc.splitTextToSize(item.name.toUpperCase(), colW[0] - 4) as string[];
+      const daysLines = doc.splitTextToSize(daysStr, colW[2] - 4) as string[];
+      const cellH = Math.max(nameLines.length, daysLines.length) * 5 + 3;
+      if (y + cellH > ph - margin - 20) return; // skip if off-page
+      doc.setFillColor(255, 255, 255);
+      doc.rect(innerL, y, innerW, cellH, 'F');
+      doc.setDrawColor(0);
+      doc.rect(innerL, y, innerW, cellH);
+      doc.line(innerL + colW[0], y, innerL + colW[0], y + cellH);
+      doc.line(innerL + colW[0] + colW[1], y, innerL + colW[0] + colW[1], y + cellH);
+      nameLines.forEach((l, i) => doc.text(l, innerL + 2, y + 5 + i * 5));
+      doc.text(qtyStr, innerL + colW[0] + 2, y + 5);
+      daysLines.forEach((l, i) => doc.text(l, innerL + colW[0] + colW[1] + 2, y + 5 + i * 5));
+      y += cellH;
+    });
+
+    // Footer
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    const footerY = ph - margin - 8;
+    doc.text(`ACADEMIC YEAR: ${school.academicYear || '2025-2026'}`, pw / 2, footerY, { align: 'center' });
+
+    doc.save(`daily_planner_${(school.name || 'school').replace(/\s+/g, '_')}.pdf`);
   };
 
   // Color palette for each category card (top accent border + shadow)  

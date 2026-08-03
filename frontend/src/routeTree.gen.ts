@@ -15,6 +15,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FoodDestroyedRouteImport } from './routes/food-destroyed'
 import { Route as FoodReleasedRouteImport } from './routes/food-released'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SchoolInformationRouteImport } from './routes/school-information'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StockRecordsRouteImport } from './routes/stock-records'
@@ -49,6 +50,11 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SchoolInformationRoute = SchoolInformationRouteImport.update({
   id: '/school-information',
   path: '/school-information',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/food-destroyed': typeof FoodDestroyedRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/school-information': typeof SchoolInformationRoute
   '/settings': typeof SettingsRoute
   '/stock-records': typeof StockRecordsRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/food-destroyed': typeof FoodDestroyedRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/school-information': typeof SchoolInformationRoute
   '/settings': typeof SettingsRoute
   '/stock-records': typeof StockRecordsRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/food-destroyed': typeof FoodDestroyedRoute
   '/food-released': typeof FoodReleasedRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/school-information': typeof SchoolInformationRoute
   '/settings': typeof SettingsRoute
   '/stock-records': typeof StockRecordsRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/food-destroyed'
     | '/food-released'
     | '/reports'
+    | '/reset-password'
     | '/school-information'
     | '/settings'
     | '/stock-records'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/food-destroyed'
     | '/food-released'
     | '/reports'
+    | '/reset-password'
     | '/school-information'
     | '/settings'
     | '/stock-records'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/food-destroyed'
     | '/food-released'
     | '/reports'
+    | '/reset-password'
     | '/school-information'
     | '/settings'
     | '/stock-records'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   FoodDestroyedRoute: typeof FoodDestroyedRoute
   FoodReleasedRoute: typeof FoodReleasedRoute
   ReportsRoute: typeof ReportsRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SchoolInformationRoute: typeof SchoolInformationRoute
   SettingsRoute: typeof SettingsRoute
   StockRecordsRoute: typeof StockRecordsRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/school-information': {
       id: '/school-information'
       path: '/school-information'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   FoodDestroyedRoute: FoodDestroyedRoute,
   FoodReleasedRoute: FoodReleasedRoute,
   ReportsRoute: ReportsRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SchoolInformationRoute: SchoolInformationRoute,
   SettingsRoute: SettingsRoute,
   StockRecordsRoute: StockRecordsRoute,

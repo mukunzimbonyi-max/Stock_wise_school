@@ -45,6 +45,10 @@ export type SchoolInfo = {
   number: string;
   district: string;
   academicYear: string;
+  studentsOLevel: number;
+  studentsALevel: number;
+  studentsPrimary: number;
+  numberOfStaff: number;
 };
 
 export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar", "Vegetables"];
@@ -249,6 +253,10 @@ export function useSchoolInfo() {
     number: "GS-2024-0417",
     district: "Huye",
     academicYear: "2025-2026",
+    studentsOLevel: 0,
+    studentsALevel: 0,
+    studentsPrimary: 0,
+    numberOfStaff: 0,
   });
   const [loaded, setLoaded] = useState(false);
 
@@ -262,6 +270,10 @@ export function useSchoolInfo() {
           number: row.number ?? "",
           district: row.district ?? "",
           academicYear: row.academic_year ?? "",
+          studentsOLevel: row.students_o_level ?? 0,
+          studentsALevel: row.students_a_level ?? 0,
+          studentsPrimary: row.students_primary ?? 0,
+          numberOfStaff: row.number_of_staff ?? 0,
         });
       })
       .catch((err) => console.error("Failed to load school info:", err))
@@ -278,6 +290,10 @@ export function useSchoolInfo() {
         number: info.number,
         district: info.district,
         academic_year: info.academicYear,
+        students_o_level: info.studentsOLevel,
+        students_a_level: info.studentsALevel,
+        students_primary: info.studentsPrimary,
+        number_of_staff: info.numberOfStaff,
       }),
     });
     if (!res.ok) throw new Error(await res.text());

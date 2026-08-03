@@ -49,7 +49,18 @@ function Login() {
     confirmPassword?: string;
   }>({});
 
-  const [stats, setStats] = useState({ foodItems: 0, studentsFed: 0, totalRecords: 0 });
+  // Forgot password modal
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotDone, setForgotDone] = useState(false);
+
+  const [stats, setStats] = useState({ 
+    studentsPrimary: 0, 
+    studentsOLevel: 0, 
+    studentsALevel: 0, 
+    numberOfStaff: 0 
+  });
 
   useEffect(() => {
     fetch(`${API_URL}/api/stock/public-stats`)
@@ -58,7 +69,7 @@ function Login() {
         return r.json();
       })
       .then((data) => {
-        if (data && typeof data.foodItems === "number") {
+        if (data && typeof data.studentsPrimary === "number") {
           setStats(data);
         }
       })
@@ -136,6 +147,32 @@ function Login() {
     }
   };
 
+  const sendReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(forgotEmail)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to send reset email");
+        return;
+      }
+      setForgotDone(true);
+    } catch {
+      toast.error("Could not connect to the server.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -190,11 +227,12 @@ function Login() {
               Track food received, released to cooks, destroyed and remaining — replacing the paper
               stock book with a clear, reliable digital record.
             </p>
-            <div className="mt-8 grid max-w-md grid-cols-3 gap-4">
+            <div className="mt-8 grid max-w-md grid-cols-2 gap-4 sm:grid-cols-4">
               {[
-                { k: stats.foodItems.toString(), v: "Food items" },
-                { k: stats.studentsFed.toLocaleString(), v: "Students fed" },
-                { k: stats.totalRecords.toString(), v: "Stock records" },
+                { k: stats.studentsPrimary.toString(), v: "Primary" },
+                { k: stats.studentsOLevel.toString(), v: "O-Level" },
+                { k: stats.studentsALevel.toString(), v: "A-Level" },
+                { k: stats.numberOfStaff.toString(), v: "Staff" },
               ].map((s) => (
                 <div key={s.v} className="rounded-xl bg-primary-foreground/10 p-4">
                   <p className="text-2xl font-bold">{s.k}</p>
@@ -335,9 +373,7 @@ function Login() {
                     </label>
                     <button
                       type="button"
-                      onClick={() =>
-                        toast.info("Contact the school ICT officer to reset your password.")
-                      }
+                      onClick={() => { setForgotOpen(true); setForgotDone(false); setForgotEmail(""); }}
                       className="text-sm font-semibold text-primary transition-colors hover:text-primary-glow"
                     >
                       Forgot password?
@@ -477,6 +513,75 @@ function Login() {
           </div>
         </div>
       </div>
+
+      {/* ── Forgot Password Modal ── */}
+      {forgotOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setForgotOpen(false); }}
+        >
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+            {forgotDone ? (
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15">
+                  <Mail className="h-7 w-7 text-green-500" />
+                </div>
+                <h2 className="text-lg font-bold">Check your inbox</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  If <strong>{forgotEmail}</strong> is registered, a password reset link has been sent. Check your inbox (and spam folder).
+                </p>
+                <button
+                  type="button"
+                  className="mt-5 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                  onClick={() => setForgotOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={sendReset} className="space-y-5">
+                <div>
+                  <h2 className="text-lg font-bold">Forgot your password?</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Enter your email and we'll send you a reset link.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email address</Label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      id="forgot-email"
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="you@school.rw"
+                      className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForgotOpen(false)}
+                    className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-muted"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {forgotLoading ? "Sending..." : "Send Reset Link"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

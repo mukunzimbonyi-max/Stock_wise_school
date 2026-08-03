@@ -58,7 +58,11 @@ async function initDB() {
         category VARCHAR(255),
         number VARCHAR(255),
         district VARCHAR(255),
-        academic_year VARCHAR(50)
+        academic_year VARCHAR(50),
+        students_o_level INTEGER DEFAULT 0,
+        students_a_level INTEGER DEFAULT 0,
+        students_primary INTEGER DEFAULT 0,
+        number_of_staff INTEGER DEFAULT 0
       );
 
       CREATE TABLE IF NOT EXISTS food_items (
@@ -69,6 +73,20 @@ async function initDB() {
       -- Add user_id to existing tables if they don't have it
       ALTER TABLE records ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
       ALTER TABLE release_records ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+
+      -- Add demographic columns to school_info if they don't have it
+      ALTER TABLE school_info ADD COLUMN IF NOT EXISTS students_o_level INTEGER DEFAULT 0;
+      ALTER TABLE school_info ADD COLUMN IF NOT EXISTS students_a_level INTEGER DEFAULT 0;
+      ALTER TABLE school_info ADD COLUMN IF NOT EXISTS students_primary INTEGER DEFAULT 0;
+      ALTER TABLE school_info ADD COLUMN IF NOT EXISTS number_of_staff INTEGER DEFAULT 0;
+
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        token VARCHAR(255) NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
     console.log("Database tables ready.");
   } catch (err) {

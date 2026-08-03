@@ -60,6 +60,13 @@ function SchoolInformation() {
     ["academicYear", "Academic Year"],
   ];
 
+  const demographicFields: Array<[keyof SchoolInfo, string]> = [
+    ["studentsPrimary", "Primary Students"],
+    ["studentsOLevel", "O-Level Students"],
+    ["studentsALevel", "A-Level Students"],
+    ["numberOfStaff", "Total Staff"],
+  ];
+
   return (
     <AppShell title="School Information" subtitle="Details printed on every stock report">
       <div className="grid gap-5 lg:grid-cols-3">
@@ -124,7 +131,7 @@ function SchoolInformation() {
               <div key={key} className="space-y-1.5">
                 <Label>{label}</Label>
                 <Input
-                  value={draft[key]}
+                  value={draft[key] as string | number}
                   disabled={!editing}
                   onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
                 />
@@ -165,6 +172,23 @@ function SchoolInformation() {
                 </Button>
               </div>
             </div>
+
+            <div className="col-span-1 sm:col-span-2">
+              <h3 className="mt-4 text-base font-semibold">Demographics</h3>
+            </div>
+            
+            {demographicFields.map(([key, label]) => (
+              <div key={key} className="space-y-1.5">
+                <Label>{label}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={draft[key] as number}
+                  disabled={!editing}
+                  onChange={(e) => setDraft({ ...draft, [key]: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

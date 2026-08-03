@@ -224,7 +224,7 @@ function Login() {
                 { k: stats.studentsPrePrimary, v: "Pre-primary" },
                 { k: stats.studentsPrimary, v: "Primary" },
                 { k: stats.studentsSecondary, v: "Secondary" },
-                { k: stats.totalStudents, v: "Total Students" },
+                { k: stats.studentsPrePrimary + stats.studentsPrimary + stats.studentsSecondary, v: "Total Students" },
               ].map((s) => (
                 <div 
                   key={s.v} 

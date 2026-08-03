@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Printer, Settings2, CheckSquare, Square } from "lucide-react";
+import { Printer, Settings2, CheckSquare, Square, PlusCircle, X, BarChart3 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSchoolInfo } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/meal-planner")({
@@ -22,7 +23,8 @@ type FoodItem = {
   nursery: number;
   primary: number;
   secondary: number;
-  unit?: string; 
+  unit?: string;
+  custom?: boolean;
 };
 
 type Category = {
@@ -30,88 +32,94 @@ type Category = {
   items: FoodItem[];
 };
 
-const FOOD_DICTIONARY: Category[] = [
+const INITIAL_FOOD_DICTIONARY: Category[] = [
   {
-    name: "Cereals",
+    name: "Cereals (Ibiritwa by'ibanze)",
     items: [
-      { name: "Maize flour", nursery: 50, primary: 100, secondary: 130 },
-      { name: "Rice", nursery: 55, primary: 110, secondary: 140 },
-      { name: "Wheat flour", nursery: 140, primary: 280, secondary: 350 },
-      { name: "Sorghum", nursery: 225, primary: 450, secondary: 550 },
-      { name: "Bread", nursery: 50, primary: 100, secondary: 130 },
-      { name: "Biscuits", nursery: 235, primary: 470, secondary: 580 },
+      { name: "Maize flour / Ifu y'ibigori", nursery: 50, primary: 100, secondary: 130 },
+      { name: "Rice / Umuceri", nursery: 55, primary: 110, secondary: 140 },
+      { name: "Wheat flour / Ifu y'ingano", nursery: 140, primary: 280, secondary: 350 },
+      { name: "Sorghum / Uburo (Ibijumba)", nursery: 225, primary: 450, secondary: 550 },
+      { name: "Bread / Imikate", nursery: 50, primary: 100, secondary: 130 },
+      { name: "Biscuits / Amakwavu", nursery: 235, primary: 470, secondary: 580 },
     ]
   },
   {
-    name: "Roots and Tubers",
+    name: "Roots & Tubers (Imbiribwa y'ubutaka)",
     items: [
-      { name: "Sweet potatoes", nursery: 175, primary: 350, secondary: 450 },
-      { name: "Cassava", nursery: 235, primary: 470, secondary: 560 },
+      { name: "Sweet potatoes / Ibikoro", nursery: 175, primary: 350, secondary: 450 },
+      { name: "Cassava / Ibirayi byo",  nursery: 235, primary: 470, secondary: 560 },
     ]
   },
   {
-    name: "Legumes",
+    name: "Legumes (Ibinyamisogwe n'ubunyobwa)",
     items: [
-      { name: "Beans", nursery: 20, primary: 40, secondary: 40 },
-      { name: "Peas", nursery: 50, primary: 100, secondary: 100 },
-      { name: "Soybeans", nursery: 50, primary: 100, secondary: 100 },
+      { name: "Beans / Ibishyimbo biganje", nursery: 20, primary: 40, secondary: 40 },
+      { name: "Peas / Ibishyimbo bita bisi", nursery: 50, primary: 100, secondary: 100 },
+      { name: "Soybeans / Ibishyimbo bibisi", nursery: 50, primary: 100, secondary: 100 },
+      { name: "Mixed protein veg / Ubunyobwa zunye", nursery: 20, primary: 40, secondary: 40 },
+      { name: "Soya products / Ubunyobwa bw'isoya", nursery: 15, primary: 30, secondary: 30 },
+      { name: "Peas (fresh) / Amashaza yunge", nursery: 20, primary: 40, secondary: 40 },
     ]
   },
   {
-    name: "Vegetables",
+    name: "Fresh Vegetables / Imboga (raw weight)",
     items: [
-      { name: "Green vegetables", nursery: 20, primary: 40, secondary: 40 },
-      { name: "Cabbage", nursery: 20, primary: 40, secondary: 40 },
-      { name: "Tomatoes", nursery: 15, primary: 30, secondary: 30 },
-      { name: "Eggplant", nursery: 20, primary: 40, secondary: 40 },
+      { name: "Spinach / Dodo", nursery: 100, primary: 100, secondary: 100 },
+      { name: "Spinach / Sipinase", nursery: 100, primary: 100, secondary: 100 },
+      { name: "Mushrooms / Amashu", nursery: 150, primary: 150, secondary: 150 },
+      { name: "Cassava leaves / Isombe", nursery: 150, primary: 150, secondary: 150 },
+      { name: "Ibibara", nursery: 150, primary: 150, secondary: 150 },
+      { name: "Eggplant / Intoryi", nursery: 160, primary: 160, secondary: 160 },
+      { name: "Carrot / Karoti", nursery: 100, primary: 100, secondary: 100 },
+      { name: "Inzayna", nursery: 160, primary: 160, secondary: 160 },
     ]
   },
   {
-    name: "Fruits",
+    name: "Fruits / Imbuto",
     items: [
-      { name: "Orange", nursery: 100, primary: 100, secondary: 100 },
-      { name: "Pineapple", nursery: 100, primary: 100, secondary: 100 },
-      { name: "Mango", nursery: 150, primary: 150, secondary: 150 },
-      { name: "Guava", nursery: 100, primary: 100, secondary: 100 },
-      { name: "Papaya", nursery: 150, primary: 150, secondary: 150 },
-      { name: "Passion fruit", nursery: 160, primary: 160, secondary: 160 },
-      { name: "Avocado", nursery: 100, primary: 100, secondary: 100 },
-      { name: "Jackfruit", nursery: 160, primary: 160, secondary: 160 },
+      { name: "Avocado / Avoka", nursery: 80, primary: 80, secondary: 80 },
+      { name: "Pineapple / Inanasi", nursery: 250, primary: 250, secondary: 250 },
+      { name: "Banana / Imineke", nursery: 150, primary: 150, secondary: 150 },
+      { name: "Mango / Inyembe", nursery: 150, primary: 150, secondary: 150 },
+      { name: "Papaya / Ipapayi", nursery: 250, primary: 250, secondary: 250 },
+      { name: "Jackfruit / Ironi", nursery: 250, primary: 250, secondary: 250 },
     ]
   },
   {
-    name: "Animal Products",
+    name: "Animal Products / Ibiribwa bikomoka ku matungo",
     items: [
-      { name: "Eggs", nursery: 80, primary: 80, secondary: 80 },
-      { name: "Milk", nursery: 250, primary: 250, secondary: 250, unit: "L" },
-      { name: "Fish", nursery: 150, primary: 150, secondary: 150 },
-      { name: "Meat", nursery: 150, primary: 150, secondary: 150 },
-      { name: "Chicken", nursery: 250, primary: 250, secondary: 250 },
-      { name: "Liver", nursery: 250, primary: 250, secondary: 250 },
+      { name: "Milk / Amata", nursery: 60, primary: 60, secondary: 60, unit: "L" },
+      { name: "Cheese / Amafi (fromage)", nursery: 15, primary: 15, secondary: 15 },
+      { name: "Eggs / Amagi", nursery: 25, primary: 25, secondary: 25 },
+      { name: "Beef / Inyama y'inka", nursery: 25, primary: 25, secondary: 25 },
+      { name: "Goat meat / Inyama y'isene", nursery: 25, primary: 25, secondary: 25 },
+      { name: "Chicken / Inyama y'inkoko", nursery: 25, primary: 25, secondary: 25 },
     ]
   },
   {
-    name: "Fats and Oils",
+    name: "Fats & Oils / Amavuta",
     items: [
-      { name: "Cooking Oil", nursery: 60, primary: 60, secondary: 60, unit: "L" },
-      { name: "Butter", nursery: 15, primary: 15, secondary: 15 },
+      { name: "Cooking Oil / Amavuta yo guteka", nursery: 5, primary: 10, secondary: 15, unit: "L" },
+      { name: "Butter / Amavuta y'inzoga", nursery: 15, primary: 15, secondary: 15 },
     ]
   },
   {
-    name: "Seasonings",
+    name: "Seasonings / Imyunyu",
     items: [
-      { name: "Iodized Salt", nursery: 5, primary: 10, secondary: 15 },
-      { name: "Spices", nursery: 3, primary: 3, secondary: 3 },
+      { name: "Iodized Salt / Umunyu w'iyode", nursery: 3, primary: 3, secondary: 3 },
     ]
   }
 ];
 
+type ItemSelectionState = {
+  selected: boolean;
+  days: [boolean, boolean, boolean, boolean, boolean];
+};
+
 type SelectedItemState = {
   [categoryIndex: number]: {
-    [itemIndex: number]: {
-      selected: boolean;
-      days: [boolean, boolean, boolean, boolean, boolean]; // M, T, W, Th, F
-    };
+    [itemIndex: number]: ItemSelectionState;
   };
 };
 
@@ -131,53 +139,99 @@ function getDaysCount(days: boolean[]): number {
   return days.filter(Boolean).length;
 }
 
+function buildDefaultSelection(dict: Category[]): SelectedItemState {
+  const s: SelectedItemState = {};
+  dict.forEach((cat, cIdx) => {
+    s[cIdx] = {};
+    cat.items.forEach((item, iIdx) => {
+      let isSelected = false;
+      let defaultDays: [boolean, boolean, boolean, boolean, boolean] = [false, false, false, false, false];
+      if (item.name === "Rice") { isSelected = true; defaultDays = [false, true, false, false, true]; }
+      if (item.name === "Maize flour") { isSelected = true; defaultDays = [true, false, true, true, false]; }
+      if (item.name === "Beans") { isSelected = true; defaultDays = [true, true, true, true, true]; }
+      if (item.name === "Cooking Oil") { isSelected = true; defaultDays = [true, true, true, true, true]; }
+      if (item.name === "Iodized Salt") { isSelected = true; defaultDays = [true, true, true, true, true]; }
+      if (item.name === "Green vegetables") { isSelected = true; defaultDays = [true, true, true, true, true]; }
+      if (item.name === "Fish") { isSelected = true; defaultDays = [true, true, true, true, true]; }
+      s[cIdx][iIdx] = { selected: isSelected, days: defaultDays };
+    });
+  });
+  return s;
+}
+
+type NewItemForm = {
+  name: string;
+  nursery: string;
+  primary: string;
+  secondary: string;
+};
+
+type PersistedMealPlanner = {
+  prePrimary: number;
+  primary: number;
+  secondary: number;
+  dictionary: Category[];
+  selection: SelectedItemState;
+};
+
+const MEAL_PLANNER_STORAGE_KEY = "sfsms.mealPlanner";
+
+function loadSavedPlanner(): PersistedMealPlanner | null {
+  try {
+    const raw = localStorage.getItem(MEAL_PLANNER_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedMealPlanner;
+    if (!parsed || !Array.isArray(parsed.dictionary) || !parsed.selection) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 function MealPlanner() {
   const { school, loaded } = useSchoolInfo();
 
-  const [prePrimary, setPrePrimary] = useState(0);
-  const [primary, setPrimary] = useState(0);
-  const [secondary, setSecondary] = useState(0);
+  const [saved] = useState(() => loadSavedPlanner());
 
-  // Initialize selected items (defaults to Rice, Maize Flour, Beans, Oil, Salt, Veg, Fish)
-  const [selection, setSelection] = useState<SelectedItemState>(() => {
-    const s: SelectedItemState = {};
-    FOOD_DICTIONARY.forEach((cat, cIdx) => {
-      s[cIdx] = {};
-      cat.items.forEach((item, iIdx) => {
-        let isSelected = false;
-        let defaultDays: [boolean, boolean, boolean, boolean, boolean] = [false, false, false, false, false];
-        
-        if (item.name === "Rice") { isSelected = true; defaultDays = [false, true, false, false, true]; } // TUE, FRI
-        if (item.name === "Maize flour") { isSelected = true; defaultDays = [true, false, true, true, false]; } // MON, WED, THU
-        if (item.name === "Beans") { isSelected = true; defaultDays = [true, true, true, true, true]; }
-        if (item.name === "Cooking Oil") { isSelected = true; defaultDays = [true, true, true, true, true]; }
-        if (item.name === "Iodized Salt") { isSelected = true; defaultDays = [true, true, true, true, true]; }
-        if (item.name === "Green vegetables") { isSelected = true; defaultDays = [true, true, true, true, true]; }
-        if (item.name === "Fish") { isSelected = true; defaultDays = [true, true, true, true, true]; }
+  const [prePrimary, setPrePrimary] = useState(saved?.prePrimary ?? 0);
+  const [primary, setPrimary] = useState(saved?.primary ?? 0);
+  const [secondary, setSecondary] = useState(saved?.secondary ?? 0);
 
-        s[cIdx][iIdx] = { selected: isSelected, days: defaultDays };
-      });
-    });
-    return s;
-  });
+  // Dynamic dictionary - initialized from static list (or restored from saved plan)
+  const [dictionary, setDictionary] = useState<Category[]>(saved?.dictionary ?? INITIAL_FOOD_DICTIONARY);
+  const [selection, setSelection] = useState<SelectedItemState>(saved?.selection ?? buildDefaultSelection(INITIAL_FOOD_DICTIONARY));
+
+  // State for the "Add New Item" inline forms per category
+  const [addingTo, setAddingTo] = useState<number | null>(null);
+  const [newItemForm, setNewItemForm] = useState<NewItemForm>({ name: "", nursery: "", primary: "", secondary: "" });
+  const [formError, setFormError] = useState("");
+
+  // State for the "Set Item Grams" card (category → item → grams per level)
+  const [configCat, setConfigCat] = useState<number | "">("");
+  const [configItem, setConfigItem] = useState<number | "">("");
+  const [configGrams, setConfigGrams] = useState<{ nursery: string; primary: string; secondary: string }>({ nursery: "", primary: "", secondary: "" });
+  const [configError, setConfigError] = useState("");
 
   useEffect(() => {
-    if (loaded) {
+    if (loaded && !saved) {
       setPrePrimary(school.studentsPrePrimary);
       setPrimary(school.studentsPrimary);
       setSecondary(school.studentsSecondary);
     }
-  }, [loaded, school]);
+  }, [loaded, school, saved]);
+
+  // Persist the plan so the page restores where you left off
+  useEffect(() => {
+    const data: PersistedMealPlanner = { prePrimary, primary, secondary, dictionary, selection };
+    localStorage.setItem(MEAL_PLANNER_STORAGE_KEY, JSON.stringify(data));
+  }, [prePrimary, primary, secondary, dictionary, selection]);
 
   const toggleItem = (cIdx: number, iIdx: number) => {
     setSelection(prev => ({
       ...prev,
       [cIdx]: {
         ...prev[cIdx],
-        [iIdx]: {
-          ...prev[cIdx][iIdx],
-          selected: !prev[cIdx][iIdx].selected
-        }
+        [iIdx]: { ...prev[cIdx][iIdx], selected: !prev[cIdx][iIdx].selected }
       }
     }));
   };
@@ -186,97 +240,420 @@ function MealPlanner() {
     setSelection(prev => {
       const newDays = [...prev[cIdx][iIdx].days] as [boolean, boolean, boolean, boolean, boolean];
       newDays[dayIdx] = !newDays[dayIdx];
-      return {
-        ...prev,
-        [cIdx]: {
-          ...prev[cIdx],
-          [iIdx]: {
-            ...prev[cIdx][iIdx],
-            days: newDays
-          }
-        }
-      };
+      return { ...prev, [cIdx]: { ...prev[cIdx], [iIdx]: { ...prev[cIdx][iIdx], days: newDays } } };
     });
   };
 
-  // Calculates total daily grams across all students for a specific item, returns in KG
+  const openAddForm = (cIdx: number) => {
+    setAddingTo(cIdx);
+    setNewItemForm({ name: "", nursery: "", primary: "", secondary: "" });
+    setFormError("");
+  };
+
+  const cancelAddForm = () => {
+    setAddingTo(null);
+    setFormError("");
+  };
+
+  const submitNewItem = (cIdx: number) => {
+    if (!newItemForm.name.trim()) { setFormError("Name is required."); return; }
+    const nursery = parseFloat(newItemForm.nursery);
+    const prim = parseFloat(newItemForm.primary);
+    const sec = parseFloat(newItemForm.secondary);
+    if (isNaN(nursery) || isNaN(prim) || isNaN(sec) || nursery < 0 || prim < 0 || sec < 0) {
+      setFormError("All gram values must be valid numbers ≥ 0.");
+      return;
+    }
+
+    const newItem: FoodItem = { name: newItemForm.name.trim(), nursery, primary: prim, secondary: sec, custom: true };
+
+    setDictionary(prev => {
+      const updated = prev.map((cat, i) => {
+        if (i !== cIdx) return cat;
+        return { ...cat, items: [...cat.items, newItem] };
+      });
+      return updated;
+    });
+
+    // Add to selection: auto-selected, all 5 days checked
+    setSelection(prev => {
+      const existingItems = prev[cIdx] || {};
+      const newIdx = Object.keys(existingItems).length;
+      return {
+        ...prev,
+        [cIdx]: {
+          ...existingItems,
+          [newIdx]: { selected: true, days: [true, true, true, true, true] }
+        }
+      };
+    });
+
+    setAddingTo(null);
+    setFormError("");
+  };
+
+  const removeCustomItem = (cIdx: number, iIdx: number) => {
+    setDictionary(prev => {
+      const updated = prev.map((cat, i) => {
+        if (i !== cIdx) return cat;
+        return { ...cat, items: cat.items.filter((_, j) => j !== iIdx) };
+      });
+      return updated;
+    });
+    setSelection(prev => {
+      const catSel = { ...prev[cIdx] };
+      delete catSel[iIdx];
+      // Re-index remaining keys
+      const reIndexed: { [key: number]: ItemSelectionState } = {};
+      Object.keys(catSel).forEach((k, newI) => { reIndexed[newI] = catSel[Number(k)]; });
+      return { ...prev, [cIdx]: reIndexed };
+    });
+  };
+
+  const selectConfigCategory = (cIdx: number) => {
+    setConfigCat(cIdx);
+    setConfigItem("");
+    setConfigGrams({ nursery: "", primary: "", secondary: "" });
+    setConfigError("");
+  };
+
+  const selectConfigItem = (iIdx: number) => {
+    if (configCat === "") return;
+    const cat = dictionary[configCat];
+    const item = cat?.items[iIdx];
+    if (!cat || !item) return;
+    setConfigItem(iIdx);
+    setConfigGrams({
+      nursery: String(item.nursery),
+      primary: String(item.primary),
+      secondary: String(item.secondary),
+    });
+    setConfigError("");
+  };
+
+  const submitConfig = () => {
+    if (configCat === "" || configItem === "") { setConfigError("Choose a category and an item."); return; }
+    const nursery = parseFloat(configGrams.nursery);
+    const prim = parseFloat(configGrams.primary);
+    const sec = parseFloat(configGrams.secondary);
+    if (isNaN(nursery) || isNaN(prim) || isNaN(sec) || nursery < 0 || prim < 0 || sec < 0) {
+      setConfigError("All gram values must be valid numbers ≥ 0.");
+      return;
+    }
+    const cIdx = configCat;
+    const iIdx = configItem;
+
+    // Update grams for the chosen item in place
+    setDictionary(prev => prev.map((cat, i) =>
+      i !== cIdx ? cat : { ...cat, items: cat.items.map((it, j) => j !== iIdx ? it : { ...it, nursery, primary: prim, secondary: sec }) }
+    ));
+
+    // Add to plan (keep existing day schedule if already selected)
+    setSelection(prev => {
+      const catSel = prev[cIdx] || {};
+      const existing = catSel[iIdx];
+      return {
+        ...prev,
+        [cIdx]: {
+          ...catSel,
+          [iIdx]: existing
+            ? { ...existing, selected: true }
+            : { selected: true, days: [true, true, true, true, true] },
+        },
+      };
+    });
+
+    setConfigError("");
+  };
+
   const calculateDailyQuantity = (item: FoodItem) => {
     const totalGrams = (prePrimary * item.nursery) + (primary * item.primary) + (secondary * item.secondary);
     return totalGrams / 1000;
   };
 
-  // Collect all currently selected items for rendering
-  const allSelectedItems = FOOD_DICTIONARY.flatMap((cat, cIdx) => 
-    cat.items.map((item, iIdx) => ({ cat, item, cIdx, iIdx, sel: selection[cIdx][iIdx] })).filter(x => x.sel.selected)
+  const allSelectedItems = dictionary.flatMap((cat, cIdx) =>
+    cat.items.map((item, iIdx) => ({ cat, item, cIdx, iIdx, sel: selection[cIdx]?.[iIdx] })).filter(x => x.sel?.selected)
   );
+
+  // Weekly quantity per selected item broken down by level (in KG)
+  const levelBreakdown = allSelectedItems.flatMap(({ item, sel }) => {
+    if (!sel) return [];
+    const days = getDaysCount(sel.days);
+    return [{
+      name: item.name,
+      custom: item.custom,
+      days,
+      nursery: (prePrimary * item.nursery * days) / 1000,
+      primary: (primary * item.primary * days) / 1000,
+      secondary: (secondary * item.secondary * days) / 1000,
+    }];
+  });
+
+  const levelTotals = levelBreakdown.reduce(
+    (acc, r) => ({ nursery: acc.nursery + r.nursery, primary: acc.primary + r.primary, secondary: acc.secondary + r.secondary }),
+    { nursery: 0, primary: 0, secondary: 0 }
+  );
+  const grandTotal = levelTotals.nursery + levelTotals.primary + levelTotals.secondary;
+  const fmtKg = (n: number) => (n > 0 ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "0");
+
+  // Color palette for each category card (top accent border + shadow)  
+  const CATEGORY_COLORS = [
+    { border: "#f59e0b", shadow: "#f59e0b40", bg: "#fffbeb", text: "#92400e" },   // Cereals – amber
+    { border: "#a16207", shadow: "#a1620740", bg: "#fefce8", text: "#713f12" },   // Roots – dark amber
+    { border: "#16a34a", shadow: "#16a34a40", bg: "#f0fdf4", text: "#14532d" },   // Legumes – green
+    { border: "#22c55e", shadow: "#22c55e40", bg: "#f0fdf4", text: "#166534" },   // Fresh Veg – light green
+    { border: "#f97316", shadow: "#f9731640", bg: "#fff7ed", text: "#7c2d12" },   // Fruits – orange
+    { border: "#ef4444", shadow: "#ef444440", bg: "#fef2f2", text: "#7f1d1d" },   // Animal – red
+    { border: "#8b5cf6", shadow: "#8b5cf640", bg: "#faf5ff", text: "#4c1d95" },   // Fats – violet
+    { border: "#0ea5e9", shadow: "#0ea5e940", bg: "#f0f9ff", text: "#0c4a6e" },   // Salt – sky
+  ];
 
   return (
     <AppShell title="Meal Planner Poster" subtitle="Print the daily food allocation table">
       <div className="mx-auto max-w-7xl space-y-6 pb-20">
-        
+
         {/* Controls - Hidden when printing */}
         <div className="card-surface p-5 sm:p-6 print:hidden">
-          <div className="flex items-center gap-2 mb-4 font-semibold text-primary">
-            <Settings2 className="h-5 w-5" />
-            <h3>Step 1: Configure Student Demographics</h3>
+          {/* Step 1 Banner */}
+          <div className="flex items-center gap-3 mb-5 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-4 py-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow">1</div>
+            <div>
+              <p className="text-sm font-bold text-primary">Configure Student Demographics</p>
+              <p className="text-xs text-muted-foreground">Enter the number of students per level</p>
+            </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-3 mb-8">
             <div className="space-y-1.5">
-              <Label>Pre-primary / Nursery</Label>
+              <Label>Pre-primary / Nursery (Incuke)</Label>
               <Input type="number" min="0" value={prePrimary} onChange={(e) => setPrePrimary(Number(e.target.value) || 0)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Primary</Label>
+              <Label>Primary (Abanza)</Label>
               <Input type="number" min="0" value={primary} onChange={(e) => setPrimary(Number(e.target.value) || 0)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Secondary</Label>
+              <Label>Secondary (Ayisumbuye)</Label>
               <Input type="number" min="0" value={secondary} onChange={(e) => setSecondary(Number(e.target.value) || 0)} />
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 font-semibold text-primary">
-            <Settings2 className="h-5 w-5" />
-            <h3>Step 2: Select Food Items & Schedule</h3>
+          {/* Step 2 Banner */}
+          <div className="flex items-center gap-3 mb-5 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 px-4 py-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow">2</div>
+            <div>
+              <p className="text-sm font-bold text-primary">Select Food Items &amp; Schedule</p>
+              <p className="text-xs text-muted-foreground">Check items, then click the day buttons (M T W Th F)</p>
+            </div>
           </div>
-          
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {FOOD_DICTIONARY.map((cat, cIdx) => (
-              <div key={cat.name} className="border rounded-lg p-3 bg-muted/20">
-                <h4 className="font-bold text-sm mb-3 uppercase text-primary border-b pb-1">{cat.name}</h4>
-                <div className="space-y-3">
-                  {cat.items.map((item, iIdx) => {
-                    const sel = selection[cIdx][iIdx];
-                    return (
-                      <div key={item.name} className="flex flex-col gap-1.5">
-                        <button 
-                          type="button" 
-                          onClick={() => toggleItem(cIdx, iIdx)}
-                          className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors text-left"
-                        >
-                          {sel.selected ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
-                          {item.name}
-                        </button>
-                        {sel.selected && (
-                          <div className="pl-6 flex gap-1">
-                            {DAY_LABELS.map((label, dayIdx) => (
+
+          {/* Configure Item Grams card */}
+          <div className="mb-6 rounded-2xl border-2 border-primary/30 bg-white p-5 sm:p-6 shadow-lg shadow-primary/10">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Settings2 className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Set Item Grams (per level)</h3>
+                <p className="text-xs text-muted-foreground">Choose a category, pick an item, then adjust the daily grams for each level</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Category</Label>
+                <Select value={configCat === "" ? "" : String(configCat)} onValueChange={(v) => selectConfigCategory(Number(v))}>
+                  <SelectTrigger><SelectValue placeholder="Choose a category" /></SelectTrigger>
+                  <SelectContent>
+                    {dictionary.map((cat, i) => (
+                      <SelectItem key={cat.name} value={String(i)}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Item</Label>
+                <Select
+                  value={configItem === "" ? "" : String(configItem)}
+                  onValueChange={(v) => selectConfigItem(Number(v))}
+                  disabled={configCat === ""}
+                >
+                  <SelectTrigger><SelectValue placeholder={configCat === "" ? "Choose a category first" : "Choose an item"} /></SelectTrigger>
+                  <SelectContent>
+                    {configCat !== "" && dictionary[configCat]?.items.map((item, j) => (
+                      <SelectItem key={`${item.name}-${j}`} value={String(j)}>{item.name}{item.custom ? " *" : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {configItem !== "" && (
+              <>
+                <div className="grid gap-3 sm:grid-cols-3 mt-4">
+                  <div className="space-y-1.5">
+                    <Label>Nursery (g)</Label>
+                    <Input type="number" min="0" value={configGrams.nursery} onChange={e => setConfigGrams(g => ({ ...g, nursery: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Primary (g)</Label>
+                    <Input type="number" min="0" value={configGrams.primary} onChange={e => setConfigGrams(g => ({ ...g, primary: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Secondary (g)</Label>
+                    <Input type="number" min="0" value={configGrams.secondary} onChange={e => setConfigGrams(g => ({ ...g, secondary: e.target.value }))} />
+                  </div>
+                </div>
+
+                {configError && <p className="text-xs text-destructive font-semibold mt-3">{configError}</p>}
+
+                <div className="flex flex-wrap items-center gap-3 mt-4">
+                  <Button onClick={submitConfig}>
+                    <CheckSquare className="mr-2 h-4 w-4" /> Add to Plan / Update Grams
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Adds the item to the plan with these grams per level.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {dictionary.map((cat, cIdx) => {
+              const color = CATEGORY_COLORS[cIdx] || CATEGORY_COLORS[0];
+              return (
+              <div
+                key={cat.name}
+                className="rounded-2xl flex flex-col overflow-hidden"
+                style={{
+                  background: color.bg,
+                  border: `2px solid ${color.border}`,
+                  boxShadow: `4px 4px 0px 0px ${color.border}, 0 8px 24px ${color.shadow}`,
+                  transition: "box-shadow 0.2s, transform 0.2s",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0px 0px ${color.border}, 0 12px 32px ${color.shadow}`; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = `4px 4px 0px 0px ${color.border}, 0 8px 24px ${color.shadow}`; }}
+              >
+                {/* Category header */}
+                <div className="px-3 py-2.5" style={{ background: color.border }}>
+                  <h4 className="font-extrabold text-[11px] uppercase tracking-widest text-white leading-tight">{cat.name}</h4>
+                </div>
+
+                <div className="p-3 flex-1 flex flex-col">
+                  <div className="space-y-2.5 flex-1">
+                    {cat.items.map((item, iIdx) => {
+                      const sel = selection[cIdx]?.[iIdx];
+                      if (!sel) return null;
+                      return (
+                        <div key={`${item.name}-${iIdx}`} className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between gap-1">
+                            <button
+                              type="button"
+                              onClick={() => toggleItem(cIdx, iIdx)}
+                              className="flex items-center gap-2 text-xs font-semibold transition-colors text-left flex-1 rounded-lg px-2 py-1"
+                              style={sel.selected ? { background: color.border + "22", color: color.text } : { color: "#6b7280" }}
+                            >
+                              {sel.selected
+                                ? <CheckSquare className="h-3.5 w-3.5 shrink-0" style={{ color: color.border }} />
+                                : <Square className="h-3.5 w-3.5 text-gray-400 shrink-0" />}
+                              <span className="truncate leading-snug">{item.name}</span>
+                            </button>
+                            {item.custom && (
                               <button
-                                key={dayIdx}
                                 type="button"
-                                onClick={() => toggleDay(cIdx, iIdx, dayIdx)}
-                                className={`w-6 h-6 text-[10px] font-bold rounded-sm border ${sel.days[dayIdx] ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+                                onClick={() => removeCustomItem(cIdx, iIdx)}
+                                className="text-gray-400 hover:text-red-500 transition-colors shrink-0 p-0.5 rounded"
+                                title="Remove item"
                               >
-                                {label}
+                                <X className="h-3 w-3" />
                               </button>
-                            ))}
+                            )}
                           </div>
-                        )}
+                          {sel.selected && (
+                            <div className="pl-5 flex gap-1">
+                              {DAY_LABELS.map((label, dayIdx) => (
+                                <button
+                                  key={dayIdx}
+                                  type="button"
+                                  onClick={() => toggleDay(cIdx, iIdx, dayIdx)}
+                                  className="w-6 h-5 text-[9px] font-black rounded transition-all"
+                                  style={sel.days[dayIdx]
+                                    ? { background: color.border, color: "#fff", boxShadow: `0 2px 0 ${color.border}99` }
+                                    : { background: "#fff", color: "#9ca3af", border: `1px solid #e5e7eb` }
+                                  }
+                                >
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                {/* Add custom item form or button */}
+                <div className="mt-3 pt-3" style={{ borderTop: `1px dashed ${color.border}80` }}>
+                  {addingTo === cIdx ? (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Item name"
+                        value={newItemForm.name}
+                        onChange={e => setNewItemForm(f => ({ ...f, name: e.target.value }))}
+                        className="h-7 text-xs"
+                        autoFocus
+                      />
+                      <div className="grid grid-cols-3 gap-1">
+                        <div>
+                          <div className="text-[9px] text-muted-foreground mb-0.5 font-semibold">Nursery (g)</div>
+                          <Input
+                            type="number" min="0" placeholder="0"
+                            value={newItemForm.nursery}
+                            onChange={e => setNewItemForm(f => ({ ...f, nursery: e.target.value }))}
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-[9px] text-muted-foreground mb-0.5 font-semibold">Primary (g)</div>
+                          <Input
+                            type="number" min="0" placeholder="0"
+                            value={newItemForm.primary}
+                            onChange={e => setNewItemForm(f => ({ ...f, primary: e.target.value }))}
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <div className="text-[9px] text-muted-foreground mb-0.5 font-semibold">Secondary (g)</div>
+                          <Input
+                            type="number" min="0" placeholder="0"
+                            value={newItemForm.secondary}
+                            onChange={e => setNewItemForm(f => ({ ...f, secondary: e.target.value }))}
+                            className="h-7 text-xs"
+                          />
+                        </div>
                       </div>
-                    );
-                  })}
+                      {formError && <p className="text-xs text-destructive font-semibold">{formError}</p>}
+                      <div className="flex gap-1.5">
+                        <Button size="sm" className="h-7 text-xs flex-1" style={{ background: color.border }} onClick={() => submitNewItem(cIdx)}>Add</Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={cancelAddForm}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openAddForm(cIdx)}
+                      className="flex items-center gap-1.5 text-[11px] font-semibold transition-colors w-full rounded-md px-2 py-1 hover:opacity-80"
+                      style={{ color: color.border }}
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      Add new item to {cat.name.split(" ")[0]}
+                    </button>
+                  )}
+                </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
 
           <div className="mt-8 flex justify-end">
@@ -286,13 +663,10 @@ function MealPlanner() {
           </div>
         </div>
 
-        {/* Poster Wrapper - Scaled down for screen, full A4 size for print */}
+        {/* Poster Wrapper */}
         <div className="flex justify-center print:block print:m-0 print:p-0">
-          
           <div className="poster-container relative bg-[#f4f6f9] text-black w-[210mm] min-h-[297mm] p-[10mm] shadow-xl print:shadow-none print:w-full print:h-full print:p-0">
-            
             <div className="h-full w-full border-[10px] border-double border-black p-8 bg-white relative flex flex-col justify-between overflow-hidden">
-              
               <div className="flex-1">
                 {/* Header */}
                 <div className="space-y-1 mb-4 uppercase font-bold text-xl leading-snug">
@@ -319,9 +693,9 @@ function MealPlanner() {
                         <tr className="bg-gray-100">
                           <th className="border border-black p-0.5 text-left">FOOD ITEM</th>
                           <th className="border border-black p-0.5">DAYS/WK</th>
-                          <th className="border border-black p-0.5">NURSERY<br/>(Daily / Wkly)</th>
-                          <th className="border border-black p-0.5">PRIMARY<br/>(Daily / Wkly)</th>
-                          <th className="border border-black p-0.5">SECONDARY<br/>(Daily / Wkly)</th>
+                          <th className="border border-black p-0.5">NURSERY<br />(Daily / Wkly)</th>
+                          <th className="border border-black p-0.5">PRIMARY<br />(Daily / Wkly)</th>
+                          <th className="border border-black p-0.5">SECONDARY<br />(Daily / Wkly)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -329,19 +703,19 @@ function MealPlanner() {
                           const days = getDaysCount(sel.days);
                           const unit = item.unit === "L" ? "ml" : "g";
                           return (
-                            <tr key={item.name}>
-                              <td className="border border-black p-0.5 text-left">{item.name}</td>
+                            <tr key={`${item.name}-ref`}>
+                              <td className="border border-black p-0.5 text-left">{item.name}{item.custom ? " *" : ""}</td>
                               <td className="border border-black p-0.5">{days}</td>
-                              <td className="border border-black p-0.5">{item.nursery}{unit} / {(item.nursery * days)}{unit}</td>
-                              <td className="border border-black p-0.5">{item.primary}{unit} / {(item.primary * days)}{unit}</td>
-                              <td className="border border-black p-0.5">{item.secondary}{unit} / {(item.secondary * days)}{unit}</td>
+                              <td className="border border-black p-0.5">{item.nursery}{unit} / {item.nursery * days}{unit}</td>
+                              <td className="border border-black p-0.5">{item.primary}{unit} / {item.primary * days}{unit}</td>
+                              <td className="border border-black p-0.5">{item.secondary}{unit} / {item.secondary * days}{unit}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
                     <div className="text-[10px] font-bold bg-yellow-100 border border-black p-0.5 text-center mt-1">
-                      FORMULA USED FOR TOTAL QUANTITY (KG): (Total Students × Daily Grams × Days/Week) ÷ 1000
+                      FORMULA: Total Qty (KG) = (Total Students × Daily Grams × Days/Week) ÷ 1000 &nbsp;|&nbsp; * = Custom item
                     </div>
                   </div>
                 )}
@@ -356,33 +730,27 @@ function MealPlanner() {
                     </tr>
                   </thead>
                   <tbody>
-                    {FOOD_DICTIONARY.map((cat, cIdx) => {
-                      const selectedItems = cat.items.map((item, iIdx) => ({ item, sel: selection[cIdx][iIdx] })).filter(x => x.sel.selected);
-                      
+                    {dictionary.map((cat, cIdx) => {
+                      const selectedItems = cat.items.map((item, iIdx) => ({ item, sel: selection[cIdx]?.[iIdx] })).filter(x => x.sel?.selected);
                       if (selectedItems.length === 0) return null;
 
                       return (
                         <React.Fragment key={cat.name}>
-                          {/* Category Header Row */}
                           <tr className="bg-gray-100">
                             <td colSpan={3} className="border-4 border-black p-1.5 text-center text-gray-500 font-extrabold tracking-widest text-[11px]">
                               {cat.name}
                             </td>
                           </tr>
-                          
-                          {/* Items */}
                           {selectedItems.map(({ item, sel }) => {
                             const daysCount = getDaysCount(sel.days);
                             const dailyQty = calculateDailyQuantity(item);
                             const weeklyQty = dailyQty * daysCount;
                             const unit = item.unit || "KG";
-                            const daysString = formatDaysString(sel.days);
-
                             return (
                               <tr key={item.name}>
                                 <td className="border-4 border-black p-1.5">{item.name}</td>
                                 <td className="border-4 border-black p-1.5 text-[15px]">{weeklyQty > 0 ? `${weeklyQty.toLocaleString()}${unit}` : `0${unit}`}</td>
-                                <td className="border-4 border-black p-1.5 text-[11px]">{daysString}</td>
+                                <td className="border-4 border-black p-1.5 text-[11px]">{formatDaysString(sel.days)}</td>
                               </tr>
                             );
                           })}
@@ -397,34 +765,97 @@ function MealPlanner() {
               <div className="text-center font-bold text-lg pt-2 mt-auto">
                 ACADEMIC YEAR: {school.academicYear || "2025-2026"}
               </div>
-
             </div>
           </div>
         </div>
 
-        {/* Global Print Styles to ensure exact A4 formatting */}
+        {/* Level Breakdown */}
+        {allSelectedItems.length > 0 && (
+          <div className="card-surface p-5 sm:p-6 print:hidden">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <BarChart3 className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Food Quantities by Level</h3>
+                <p className="text-xs text-muted-foreground">
+                  Weekly quantity of each item going to Pre-primary, Primary and Secondary, based on grams and student counts
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3 mb-5">
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <p className="text-[11px] font-semibold text-muted-foreground">Pre-primary students</p>
+                <p className="text-2xl font-bold text-primary">{prePrimary}</p>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <p className="text-[11px] font-semibold text-muted-foreground">Primary students</p>
+                <p className="text-2xl font-bold text-primary">{primary}</p>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <p className="text-[11px] font-semibold text-muted-foreground">Secondary students</p>
+                <p className="text-2xl font-bold text-primary">{secondary}</p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="border border-border p-2">FOOD ITEM</th>
+                    <th className="border border-border p-2 text-center">DAYS</th>
+                    <th className="border border-border p-2 text-right">PRE-PRIMARY (KG)</th>
+                    <th className="border border-border p-2 text-right">PRIMARY (KG)</th>
+                    <th className="border border-border p-2 text-right">SECONDARY (KG)</th>
+                    <th className="border border-border p-2 text-right">TOTAL (KG)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {levelBreakdown.map((r) => (
+                    <tr key={r.name} className="hover:bg-muted/30">
+                      <td className="border border-border p-2 font-medium">{r.name}{r.custom ? " *" : ""}</td>
+                      <td className="border border-border p-2 text-center">{r.days}</td>
+                      <td className="border border-border p-2 text-right">{fmtKg(r.nursery)}</td>
+                      <td className="border border-border p-2 text-right">{fmtKg(r.primary)}</td>
+                      <td className="border border-border p-2 text-right">{fmtKg(r.secondary)}</td>
+                      <td className="border border-border p-2 text-right font-semibold">{fmtKg(r.nursery + r.primary + r.secondary)}</td>
+                    </tr>
+                  ))}
+                  <tr className="font-bold bg-primary/10">
+                    <td className="border border-border p-2" colSpan={3}>TOTAL ({levelBreakdown.length} items)</td>
+                    <td className="border border-border p-2 text-right">{fmtKg(levelTotals.nursery)}</td>
+                    <td className="border border-border p-2 text-right">{fmtKg(levelTotals.primary)}</td>
+                    <td className="border border-border p-2 text-right">{fmtKg(levelTotals.secondary)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <div className="rounded-xl bg-primary text-primary-foreground px-4 py-3">
+                <p className="text-[11px] font-semibold opacity-80">GRAND TOTAL (all levels)</p>
+                <p className="text-2xl font-bold">{fmtKg(grandTotal)} KG</p>
+              </div>
+              <div className="rounded-xl bg-muted px-4 py-3">
+                <p className="text-[11px] font-semibold text-muted-foreground">Total students</p>
+                <p className="text-2xl font-bold">{prePrimary + primary + secondary}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Print Styles */}
         <style dangerouslySetInnerHTML={{
           __html: `
             @media print {
-              @page {
-                size: A4 portrait;
-                margin: 0;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-                background: white !important;
+              @page { size: A4 portrait; margin: 0; }
+              body { margin: 0; padding: 0; background: white !important;
                 -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              .poster-container {
-                box-shadow: none !important;
-                width: 100% !important;
-                height: 100vh !important;
-                margin: 0 !important;
-                border: none !important;
-                overflow: hidden !important;
-              }
+                print-color-adjust: exact !important; }
+              .poster-container { box-shadow: none !important; width: 100% !important;
+                min-height: 100vh !important; height: auto !important;
+                margin: 0 !important; border: none !important; overflow: hidden !important; }
             }
           `
         }} />

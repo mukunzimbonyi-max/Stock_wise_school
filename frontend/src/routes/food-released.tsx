@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Soup, Trash2, Users, Utensils } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
@@ -53,6 +53,59 @@ export const Route = createFileRoute("/food-released")({
 
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
+type PlanFoodItem = { name: string; nursery: number; primary: number; secondary: number };
+type PersistedMealPlan = {
+  prePrimary: number;
+  primary: number;
+  secondary: number;
+  dictionary: { name: string; items: PlanFoodItem[] }[];
+  selection: Record<number, Record<number, { selected: boolean; days: boolean[] }>>;
+};
+
+const MEAL_PLAN_KEY = "sfsms.mealPlanner";
+
+// Reads the saved meal plan: weekly KG quantity per planned item + total students
+function loadMealPlan(): { quantities: Map<string, number>; totalStudents: number } {
+  const quantities = new Map<string, number>();
+  let totalStudents = 0;
+  try {
+    const raw = localStorage.getItem(MEAL_PLAN_KEY);
+    if (!raw) return { quantities, totalStudents };
+    const plan = JSON.parse(raw) as PersistedMealPlan;
+    if (!plan || !Array.isArray(plan.dictionary) || !plan.selection) return { quantities, totalStudents };
+    const prePrimary = plan.prePrimary || 0;
+    const primary = plan.primary || 0;
+    const secondary = plan.secondary || 0;
+    totalStudents = prePrimary + primary + secondary;
+    plan.dictionary.forEach((cat, cIdx) => {
+      cat.items.forEach((item, iIdx) => {
+        const sel = plan.selection?.[cIdx]?.[iIdx];
+        if (!sel?.selected) return;
+        const days = Array.isArray(sel.days) ? sel.days.filter(Boolean).length : 0;
+        if (!days) return;
+        const qty = Math.round(((prePrimary * item.nursery + primary * item.primary + secondary * item.secondary) * days) / 10) / 100;
+        if (qty > 0) quantities.set(item.name.toLowerCase(), qty);
+      });
+    });
+  } catch {
+    // ignore malformed saved plan
+  }
+  return { quantities, totalStudents };
+}
+
+// Matches a release food item (e.g. "Rice", "Maize Flour", "Salt") to a plan item
+function matchPlanQty(planQty: Map<string, number>, foodItem: string): number | null {
+  const needle = foodItem.trim().toLowerCase();
+  if (!needle) return null;
+  for (const [name, qty] of planQty.entries()) {
+    const parts = name.split(" / ");
+    const base = (parts[0] ?? name).trim().toLowerCase();
+    if (base === needle) return qty;
+    if (needle.includes(base) || base.includes(needle)) return qty;
+  }
+  return null;
+}
+
 function FoodReleased() {
   const { releases, add, remove } = useReleases();
   const { foodItems, addFoodItem } = useFoodItems();
@@ -74,6 +127,24 @@ function FoodReleased() {
   const [customItem, setCustomItem] = useState("");
 
   const effectiveItem = customMode && customItem.trim() ? customItem.trim() : form.foodItem;
+
+  // Amount from the saved meal plan for the currently selected item
+  const planSummary = useMemo(() => loadMealPlan(), []);
+  const planQtyForItem = useMemo(
+    () => (customMode ? null : matchPlanQty(planSummary.quantities, form.foodItem)),
+    [planSummary, form.foodItem, customMode],
+  );
+
+  // Auto-fill quantity and students fed from the meal plan when an item is selected
+  useEffect(() => {
+    if (!customMode && planQtyForItem) {
+      setForm((f) => ({
+        ...f,
+        quantity: planQtyForItem,
+        studentsFed: planSummary.totalStudents || f.studentsFed,
+      }));
+    }
+  }, [planQtyForItem, customMode, planSummary.totalStudents]);
 
   useEffect(() => {
     if (!customMode) {
@@ -215,6 +286,11 @@ function FoodReleased() {
                 value={form.quantity}
                 onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) || 0 })}
               />
+              {planQtyForItem !== null && (
+                <p className="text-[11px] font-semibold text-primary">
+                  From meal plan: {planQtyForItem} Kg (weekly)
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Remaining</Label>
@@ -241,6 +317,11 @@ function FoodReleased() {
                 value={form.studentsFed}
                 onChange={(e) => setForm({ ...form, studentsFed: Number(e.target.value) || 0 })}
               />
+              {planQtyForItem !== null && planSummary.totalStudents > 0 && (
+                <p className="text-[11px] font-semibold text-primary">
+                  From meal plan: {planSummary.totalStudents} students
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Meal Type</Label>

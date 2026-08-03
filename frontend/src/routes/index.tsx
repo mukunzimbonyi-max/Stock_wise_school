@@ -29,6 +29,31 @@ export const Route = createFileRoute("/")({
   component: Login,
 });
 
+function AnimatedNumber({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let startTimestamp: number | null = null;
+    const duration = 2000; // 2 seconds
+
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setDisplayValue(Math.floor(easeProgress * value));
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        setDisplayValue(value);
+      }
+    };
+
+    window.requestAnimationFrame(step);
+  }, [value]);
+
+  return <>{displayValue.toLocaleString()}</>;
+}
+
 function Login() {
   const navigate = useNavigate();
   const loginFn = useAuthStore((state) => state.login);
@@ -196,13 +221,13 @@ function Login() {
             </p>
             <div className="mt-8 grid max-w-md grid-cols-2 gap-4 sm:grid-cols-4">
               {[
-                { k: stats.studentsPrePrimary.toString(), v: "Pre-primary" },
-                { k: stats.studentsPrimary.toString(), v: "Primary" },
-                { k: stats.studentsSecondary.toString(), v: "Secondary" },
-                { k: stats.totalStudents.toString(), v: "Total" },
+                { k: stats.studentsPrePrimary, v: "Pre-primary" },
+                { k: stats.studentsPrimary, v: "Primary" },
+                { k: stats.studentsSecondary, v: "Secondary" },
+                { k: stats.totalStudents, v: "Total" },
               ].map((s) => (
                 <div key={s.v} className="rounded-xl bg-primary-foreground/10 p-4">
-                  <p className="text-2xl font-bold">{s.k}</p>
+                  <p className="text-2xl font-bold"><AnimatedNumber value={s.k} /></p>
                   <p className="text-xs text-primary-foreground/75">{s.v}</p>
                 </div>
               ))}

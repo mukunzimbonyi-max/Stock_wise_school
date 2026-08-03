@@ -9,7 +9,7 @@ import {
   Trash2,
   Warehouse,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Bar,
   BarChart,
@@ -44,6 +44,7 @@ import {
   summarize,
   useStockRecords,
   useReleases,
+  useSchoolInfo,
 } from "@/lib/stock-store";
 
 export const Route = createFileRoute("/dashboard")({
@@ -75,7 +76,33 @@ const CHART_COLORS = [
   "var(--primary-glow)",
 ];
 
+function AnimatedNumber({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let startTimestamp: number | null = null;
+    const duration = 2000; // 2 seconds
+
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setDisplayValue(Math.floor(easeProgress * value));
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        setDisplayValue(value);
+      }
+    };
+
+    window.requestAnimationFrame(step);
+  }, [value]);
+
+  return <>{displayValue.toLocaleString()}</>;
+}
+
 function Dashboard() {
+  const { school } = useSchoolInfo();
   const { records } = useStockRecords();
   const { releases } = useReleases();
   const [search, setSearch] = useState("");
@@ -205,7 +232,35 @@ function Dashboard() {
               Huye District · Mukura Sector
             </p>
             <p className="text-xl font-extrabold uppercase tracking-widest text-primary">
-              Groupe Scolaire NKUBI
+              {school.name || "Groupe Scolaire NKUBI"}
+            </p>
+          </div>
+        </div>
+
+        {/* Student Demographics Animation */}
+        <div className="grid gap-4 sm:grid-cols-4">
+          <div className="card-surface p-5 flex flex-col justify-center bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+            <p className="text-xs font-bold text-blue-600/80 uppercase tracking-wider mb-1">Total Students</p>
+            <p className="text-3xl font-black text-blue-700">
+              <AnimatedNumber value={school.studentsPrePrimary + school.studentsPrimary + school.studentsSecondary} />
+            </p>
+          </div>
+          <div className="card-surface p-5 flex flex-col justify-center">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Pre-primary</p>
+            <p className="text-2xl font-bold text-foreground">
+              <AnimatedNumber value={school.studentsPrePrimary} />
+            </p>
+          </div>
+          <div className="card-surface p-5 flex flex-col justify-center">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Primary</p>
+            <p className="text-2xl font-bold text-foreground">
+              <AnimatedNumber value={school.studentsPrimary} />
+            </p>
+          </div>
+          <div className="card-surface p-5 flex flex-col justify-center">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Secondary</p>
+            <p className="text-2xl font-bold text-foreground">
+              <AnimatedNumber value={school.studentsSecondary} />
             </p>
           </div>
         </div>

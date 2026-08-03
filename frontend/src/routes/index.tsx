@@ -224,11 +224,22 @@ function Login() {
                 { k: stats.studentsPrePrimary, v: "Pre-primary" },
                 { k: stats.studentsPrimary, v: "Primary" },
                 { k: stats.studentsSecondary, v: "Secondary" },
-                { k: stats.totalStudents, v: "Total" },
+                { k: stats.totalStudents, v: "Total Students" },
               ].map((s) => (
-                <div key={s.v} className="rounded-xl bg-primary-foreground/10 p-4">
-                  <p className="text-2xl font-bold"><AnimatedNumber value={s.k} /></p>
-                  <p className="text-xs text-primary-foreground/75">{s.v}</p>
+                <div 
+                  key={s.v} 
+                  className={`rounded-xl p-4 flex flex-col justify-center ${
+                    s.v === "Total Students"
+                      ? "bg-gradient-to-br from-white/30 to-white/10 border border-white/40 shadow-lg"
+                      : "bg-primary-foreground/10"
+                  }`}
+                >
+                  <p className={`${s.v === "Total Students" ? "text-3xl font-black text-white" : "text-2xl font-bold"}`}>
+                    <AnimatedNumber value={s.k} />
+                  </p>
+                  <p className={`text-xs ${s.v === "Total Students" ? "text-white/90 font-bold uppercase tracking-wider" : "text-primary-foreground/75"}`}>
+                    {s.v}
+                  </p>
                 </div>
               ))}
             </div>

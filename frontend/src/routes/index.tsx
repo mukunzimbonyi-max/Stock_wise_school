@@ -56,10 +56,10 @@ function Login() {
   const [forgotDone, setForgotDone] = useState(false);
 
   const [stats, setStats] = useState({ 
+    studentsPrePrimary: 0, 
     studentsPrimary: 0, 
-    studentsOLevel: 0, 
-    studentsALevel: 0, 
-    numberOfStaff: 0 
+    studentsSecondary: 0, 
+    totalStudents: 0 
   });
 
   useEffect(() => {
@@ -69,7 +69,7 @@ function Login() {
         return r.json();
       })
       .then((data) => {
-        if (data && typeof data.studentsPrimary === "number") {
+        if (data && typeof data.studentsPrePrimary === "number") {
           setStats(data);
         }
       })
@@ -229,10 +229,10 @@ function Login() {
             </p>
             <div className="mt-8 grid max-w-md grid-cols-2 gap-4 sm:grid-cols-4">
               {[
+                { k: stats.studentsPrePrimary.toString(), v: "Pre-primary" },
                 { k: stats.studentsPrimary.toString(), v: "Primary" },
-                { k: stats.studentsOLevel.toString(), v: "O-Level" },
-                { k: stats.studentsALevel.toString(), v: "A-Level" },
-                { k: stats.numberOfStaff.toString(), v: "Staff" },
+                { k: stats.studentsSecondary.toString(), v: "Secondary" },
+                { k: stats.totalStudents.toString(), v: "Total" },
               ].map((s) => (
                 <div key={s.v} className="rounded-xl bg-primary-foreground/10 p-4">
                   <p className="text-2xl font-bold">{s.k}</p>

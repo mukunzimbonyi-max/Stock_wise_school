@@ -45,10 +45,10 @@ export type SchoolInfo = {
   number: string;
   district: string;
   academicYear: string;
-  studentsOLevel: number;
-  studentsALevel: number;
+  studentsPrePrimary: number;
   studentsPrimary: number;
-  numberOfStaff: number;
+  studentsSecondary: number;
+  totalStudents: number;
 };
 
 export const FOOD_ITEMS = ["Rice", "Beans", "Maize Flour", "Cooking Oil", "Salt", "Sugar", "Vegetables"];
@@ -253,10 +253,10 @@ export function useSchoolInfo() {
     number: "GS-2024-0417",
     district: "Huye",
     academicYear: "2025-2026",
-    studentsOLevel: 0,
-    studentsALevel: 0,
+    studentsPrePrimary: 0,
     studentsPrimary: 0,
-    numberOfStaff: 0,
+    studentsSecondary: 0,
+    totalStudents: 0,
   });
   const [loaded, setLoaded] = useState(false);
 
@@ -264,17 +264,17 @@ export function useSchoolInfo() {
     fetch(`${API_URL}/api/stock/school`)
       .then((r) => r.json())
       .then((row) => {
-        setSchoolState({
-          name: row.name ?? "",
-          category: row.category ?? "",
-          number: row.number ?? "",
-          district: row.district ?? "",
-          academicYear: row.academic_year ?? "",
-          studentsOLevel: row.students_o_level ?? 0,
-          studentsALevel: row.students_a_level ?? 0,
-          studentsPrimary: row.students_primary ?? 0,
-          numberOfStaff: row.number_of_staff ?? 0,
-        });
+          setSchoolState({
+            name: row.name ?? "",
+            category: row.category ?? "",
+            number: row.number ?? "",
+            district: row.district ?? "",
+            academicYear: row.academic_year ?? "",
+            studentsPrePrimary: row.students_pre_primary ?? 0,
+            studentsPrimary: row.students_primary ?? 0,
+            studentsSecondary: row.students_secondary ?? 0,
+            totalStudents: row.total_students ?? 0,
+          });
       })
       .catch((err) => console.error("Failed to load school info:", err))
       .finally(() => setLoaded(true));
@@ -290,10 +290,10 @@ export function useSchoolInfo() {
         number: info.number,
         district: info.district,
         academic_year: info.academicYear,
-        students_o_level: info.studentsOLevel,
-        students_a_level: info.studentsALevel,
+        students_pre_primary: info.studentsPrePrimary,
         students_primary: info.studentsPrimary,
-        number_of_staff: info.numberOfStaff,
+        students_secondary: info.studentsSecondary,
+        total_students: info.totalStudents,
       }),
     });
     if (!res.ok) throw new Error(await res.text());

@@ -208,7 +208,7 @@ stockRouter.get("/school", async (_req, res) => {
       return res.json({
         name: "GS NKUBI", category: "Day School",
         number: "GS-2024-0417", district: "Huye", academic_year: "2025-2026",
-        students_o_level: 0, students_a_level: 0, students_primary: 0, number_of_staff: 0,
+        students_pre_primary: 0, students_primary: 0, students_secondary: 0, total_students: 0,
       });
     }
     res.json(result.rows[0]);
@@ -221,12 +221,12 @@ stockRouter.get("/school", async (_req, res) => {
 // PUT /api/stock/school
 stockRouter.put("/school", async (req, res) => {
   try {
-    const { name, category, number, district, academic_year, students_o_level, students_a_level, students_primary, number_of_staff } = req.body;
+    const { name, category, number, district, academic_year, students_pre_primary, students_primary, students_secondary, total_students } = req.body;
     await pool.query("DELETE FROM school_info");
     const result = await pool.query(
-      `INSERT INTO school_info (name, category, number, district, academic_year, students_o_level, students_a_level, students_primary, number_of_staff)
+      `INSERT INTO school_info (name, category, number, district, academic_year, students_pre_primary, students_primary, students_secondary, total_students)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [name, category, number, district, academic_year, students_o_level || 0, students_a_level || 0, students_primary || 0, number_of_staff || 0]
+      [name, category, number, district, academic_year, students_pre_primary || 0, students_primary || 0, students_secondary || 0, total_students || 0]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -272,23 +272,23 @@ stockRouter.post("/food-items", async (req, res) => {
 // GET /api/stock/public-stats
 stockRouter.get("/public-stats", async (_req, res) => {
   try {
-    const result = await pool.query("SELECT students_o_level, students_a_level, students_primary, number_of_staff FROM school_info LIMIT 1");
+    const result = await pool.query("SELECT students_pre_primary, students_primary, students_secondary, total_students FROM school_info LIMIT 1");
     
     if (result.rows.length === 0) {
       return res.json({
-        studentsOLevel: 0,
-        studentsALevel: 0,
+        studentsPrePrimary: 0,
         studentsPrimary: 0,
-        numberOfStaff: 0,
+        studentsSecondary: 0,
+        totalStudents: 0,
       });
     }
     
     const row = result.rows[0];
     res.json({
-      studentsOLevel: parseInt(row.students_o_level) || 0,
-      studentsALevel: parseInt(row.students_a_level) || 0,
+      studentsPrePrimary: parseInt(row.students_pre_primary) || 0,
       studentsPrimary: parseInt(row.students_primary) || 0,
-      numberOfStaff: parseInt(row.number_of_staff) || 0,
+      studentsSecondary: parseInt(row.students_secondary) || 0,
+      totalStudents: parseInt(row.total_students) || 0,
     });
   } catch (err) {
     console.error("GET /api/stock/public-stats error:", err);

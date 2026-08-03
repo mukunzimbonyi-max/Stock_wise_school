@@ -61,10 +61,10 @@ function SchoolInformation() {
   ];
 
   const demographicFields: Array<[keyof SchoolInfo, string]> = [
+    ["studentsPrePrimary", "Pre-primary Students"],
     ["studentsPrimary", "Primary Students"],
-    ["studentsOLevel", "O-Level Students"],
-    ["studentsALevel", "A-Level Students"],
-    ["numberOfStaff", "Total Staff"],
+    ["studentsSecondary", "Secondary Students"],
+    ["totalStudents", "Total Students"],
   ];
 
   return (

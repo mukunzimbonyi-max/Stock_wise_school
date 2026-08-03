@@ -219,7 +219,9 @@ authRouter.post("/forgot-password", async (req, res) => {
 
     if (emailError) {
       console.error("Resend error:", emailError);
-      return res.status(500).json({ error: "Failed to send reset email. Please try again." });
+      return res.status(500).json({ 
+        error: `Failed to send reset email: ${emailError.message || 'Unknown error from Resend'}` 
+      });
     }
 
     res.json({ message: "If that email is registered, a reset link has been sent." });

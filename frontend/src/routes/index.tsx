@@ -338,13 +338,9 @@ function Login() {
                       />
                       Remember me
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => toast.info("Currently not working, contact 0787065284")}
-                      className="text-sm font-semibold text-primary transition-colors hover:text-primary-glow"
-                    >
-                      Forgot password?
-                    </button>
+                    <span className="text-xs text-muted-foreground text-right mt-1">
+                      Forgot password? Currently not working, contact 0787065284
+                    </span>
                   </div>
 
                   <div className="flex flex-col gap-3">
